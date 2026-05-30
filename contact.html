@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="gu">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Contact Us | Doctor Na Gola</title>
+  
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-database-compat.js"></script>
+  
+  <!-- CSS -->
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- Navbar -->
+  <nav id="navbar"></nav>
+
+  <!-- Header -->
+  <header class="page-header fade-in" style="padding: 5rem 0 2rem;">
+    <div class="container">
+      <h1 data-t="contact_title">Contact Us</h1>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="section" style="padding-top: 0; min-height: 50vh;">
+    <div class="container">
+      
+      <div class="contact-grid">
+        
+        <!-- Left: Info -->
+        <div class="fade-in">
+          <div class="contact-info-cards">
+            
+            <div class="contact-card">
+              <div class="contact-card-icon">📍</div>
+              <div class="contact-card-text">
+                <h4 data-t="contact_visit">Visit Our Shop</h4>
+                <p data-t="brand_address">Tithal Road, Opp. Sardar Heights, Valsad</p>
+              </div>
+            </div>
+
+            <div class="contact-card" style="transition-delay: 0.1s;">
+              <div class="contact-card-icon">📞</div>
+              <div class="contact-card-text">
+                <h4 data-t="contact_call">Call Us</h4>
+                <p><span data-t="brand_owner">Mohit Vachhani</span> - <span data-t="brand_phone">97122 11599</span></p>
+              </div>
+            </div>
+
+            <div class="contact-card" style="transition-delay: 0.2s;">
+              <div class="contact-card-icon">⏰</div>
+              <div class="contact-card-text">
+                <h4 data-t="contact_hours">Opening Hours</h4>
+                <p data-t="contact_hours_val">10:00 AM – 10:00 PM (Daily)</p>
+              </div>
+            </div>
+
+          </div>
+          
+          <a href="https://wa.me/919712211599" target="_blank" class="whatsapp-btn">
+            💬 <span data-t="contact_whatsapp">Chat on WhatsApp</span>
+          </a>
+
+          <div class="map-embed fade-in" style="transition-delay: 0.3s;">
+            <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d14948.33758066299!2d72.912644!3d20.597521!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3be0c2b291d2db4d%3A0x6b262fdb9fb399!2sTithal%20Rd%2C%20Valsad%2C%20Gujarat%20396001!5e0!3m2!1sen!2sin!4v1717070000000!5m2!1sen!2sin" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+          </div>
+        </div>
+
+        <!-- Right: Form -->
+        <div class="fade-in" style="transition-delay: 0.2s;">
+          <div class="card">
+            <h3 style="margin-bottom: 1.5rem; color: var(--text);" data-t="contact_form_title">Send us a Message</h3>
+            
+            <form onsubmit="submitContact(event)">
+              <div class="form-group">
+                <label data-t="contact_form_name">Your Name</label>
+                <input type="text" id="contactName" class="form-input" required data-t="contact_form_name" placeholder="Your Name">
+              </div>
+              
+              <div class="form-group">
+                <label data-t="contact_form_phone">Phone Number</label>
+                <input type="tel" id="contactPhone" class="form-input" required pattern="[0-9]{10}" data-t="contact_form_phone" placeholder="Phone Number">
+              </div>
+
+              <div class="form-group">
+                <label data-t="contact_form_msg">Your Message</label>
+                <textarea id="contactMsg" class="form-input" required data-t="contact_form_msg" placeholder="Your Message"></textarea>
+              </div>
+
+              <button type="submit" class="btn btn-primary btn-block" id="submitContactBtn">
+                ✉️ <span data-t="contact_form_send">Send Message</span>
+              </button>
+            </form>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer id="footer"></footer>
+
+  <!-- JS -->
+  <script src="js/firebase-config.js"></script>
+  <script src="js/data.js"></script>
+  <script src="js/app.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      renderNavbar('contact');
+      renderFooter();
+    });
+
+    async function submitContact(e) {
+      e.preventDefault();
+      const btn = document.getElementById('submitContactBtn');
+      const originalText = btn.innerHTML;
+      
+      const name = document.getElementById('contactName').value;
+      const phone = document.getElementById('contactPhone').value;
+      const msg = document.getElementById('contactMsg').value;
+
+      btn.innerHTML = `<span data-t="common_loading">${t('common_loading')}</span>...`;
+      btn.disabled = true;
+
+      try {
+        await DB.pushContact({
+          name, phone, message: msg, timestamp: Date.now()
+        });
+        
+        showToast(currentLang === 'gu' ? '✅ મેસેજ મોકલવામાં આવ્યો છે!' : '✅ Message sent successfully!');
+        
+        // Reset
+        document.getElementById('contactName').value = '';
+        document.getElementById('contactPhone').value = '';
+        document.getElementById('contactMsg').value = '';
+        
+      } catch (error) {
+        showToast('Error sending message', 'error');
+        console.error(error);
+      } finally {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+      }
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="gu">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Menu | Doctor Na Gola</title>
+  
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-database-compat.js"></script>
+  
+  <!-- CSS -->
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- Navbar Placeholder -->
+  <nav id="navbar"></nav>
+
+  <!-- Header -->
+  <header class="page-header fade-in">
+    <div class="container">
+      <h1 data-t="menu_title">Our Menu</h1>
+      <p data-t="sec_flavors_sub">Choose from 20 amazing flavors</p>
+    </div>
+  </header>
+
+  <!-- Menu Content -->
+  <main class="section" style="padding-top: 0; min-height: 50vh;">
+    <div class="container">
+      
+      <!-- Search -->
+      <div class="search-bar fade-in">
+        <input type="text" id="searchInput" data-t="menu_search" placeholder="Search flavors..." onkeyup="filterMenu()">
+      </div>
+
+      <!-- Filters -->
+      <div class="filter-tabs fade-in" id="filterTabs">
+        <div class="filter-tab active" data-filter="all" data-t="menu_all" onclick="setFilter('all')">All Flavors</div>
+        <div class="filter-tab" data-filter="special" data-t="menu_specials" onclick="setFilter('special')">Dr. Special</div>
+        <div class="filter-tab" data-filter="stick" data-t="menu_stick" onclick="setFilter('stick')">Stick Gola</div>
+      </div>
+
+      <!-- Grid -->
+      <div class="flavors-grid" id="menuGrid">
+        <!-- Rendered by menu.js -->
+      </div>
+      
+      <!-- Empty State -->
+      <div id="noResults" style="display: none; text-align: center; padding: 3rem; color: var(--text-light);">
+        <div style="font-size: 3rem; margin-bottom: 1rem;">🔍</div>
+        <p>No flavors found.</p>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- Customization Modal -->
+  <div class="modal-overlay" id="customizeModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="modalTitle">Customize Gola</h3>
+        <button class="modal-close" onclick="closeModal()">×</button>
+      </div>
+      <div class="modal-body">
+        
+        <div id="modalContent">
+          <!-- Rendered dynamically -->
+        </div>
+
+      </div>
+      <div class="modal-footer">
+        <div class="price-summary">
+          <div class="price-row">
+            <span>Base Price:</span>
+            <span id="summaryBasePrice">₹0</span>
+          </div>
+          <div class="price-row">
+            <span>Toppings:</span>
+            <span id="summaryToppingsPrice">₹0</span>
+          </div>
+          <div class="price-total">
+            <span data-t="menu_total">Total:</span>
+            <span id="summaryTotal">₹0</span>
+          </div>
+        </div>
+        
+        <button class="btn btn-primary btn-block" style="margin-top: 1rem;" onclick="addToCartAndClose()">
+          🛒 <span data-t="menu_add_cart">Add to Cart</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer Placeholder -->
+  <footer id="footer"></footer>
+
+  <!-- JS -->
+  <script src="js/firebase-config.js"></script>
+  <script src="js/data.js"></script>
+  <script src="js/app.js"></script>
+  <script src="js/menu.js"></script>
+</body>
+</html>

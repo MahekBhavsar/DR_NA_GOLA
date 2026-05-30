@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Doctor Na Gola | Valsad</title>
+  <meta name="description" content="Doctor Na Gola serves fresh, premium gola in Valsad with classic flavours, specials, and quick pickup ordering.">
+
+  <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-database-compat.js"></script>
+
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/refresh.css">
+</head>
+<body class="home-classic">
+  <nav id="navbar"></nav>
+
+  <section class="home-hero">
+    <div class="home-hero-shine" aria-hidden="true"></div>
+    <div class="home-hero-inner">
+      <div class="home-hero-copy">
+        <p class="home-kicker">Fresh premium gola in Valsad</p>
+        <h1>Doctor Na Gola</h1>
+        <p class="home-subtitle">Premium gola, rich toppings, clean preparation, and quick pickup from the heart of Valsad.</p>
+
+        <div class="home-hero-actions" aria-label="Primary actions">
+          <a href="menu.html" class="btn btn-primary btn-lg">Order Now</a>
+          <a href="https://wa.me/919081947464" target="_blank" class="btn btn-outline btn-lg">WhatsApp</a>
+        </div>
+
+        <div class="home-follow">
+          <span>Follow on:</span>
+          <a href="https://www.instagram.com/drnagola" target="_blank">Instagram</a>
+          <a href="https://wa.me/919081947464" target="_blank">WhatsApp</a>
+        </div>
+      </div>
+
+      <div class="home-hero-brand" aria-label="Doctor Na Gola logo">
+        <img src="assets/logo.png" alt="Doctor Na Gola" onerror="this.style.display='none'">
+      </div>
+    </div>
+    <div class="home-scroll-hint" aria-hidden="true"></div>
+  </section>
+
+  <section id="specials" class="section home-section-white">
+    <div class="container">
+      <h2 class="section-title">Dr. Special Collection</h2>
+      <p class="section-subtitle">Signature premium golas made for serious sweet cravings.</p>
+      <div class="specials-grid" id="specialsGrid"></div>
+      <div class="text-center home-section-action">
+        <a href="menu.html" class="btn btn-primary">View Full Menu</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="section home-section-soft">
+    <div class="container">
+      <h2 class="section-title">Why Customers Choose Us</h2>
+      <p class="section-subtitle">A short menu, careful preparation, and flavours people come back for.</p>
+
+      <div class="features-grid home-feature-grid">
+        <div class="feature-card">
+          <div class="feature-icon home-svg-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M12 2.5s6 6.4 6 11.1A6 6 0 0 1 6 13.6C6 8.9 12 2.5 12 2.5Z"/><path d="M9.1 14.1c.3 1.8 1.5 2.8 3.3 3"/></svg>
+          </div>
+          <h4>Mineral Water</h4>
+          <p>Fresh ice prepared with clean mineral water.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon home-svg-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M7 4h10l-1 6.5a4 4 0 0 1-8 0L7 4Z"/><path d="M9 20h6"/><path d="M12 14v6"/><path d="M8.5 8h7"/></svg>
+          </div>
+          <h4>Khada Sakar Syrup</h4>
+          <p>Balanced sweetness with a classic gola taste.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon home-svg-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M12 21c4-2.3 7-6.2 7-10.5A6.5 6.5 0 0 0 6.4 8.2"/><path d="M4 13c0 3.4 3.2 6.2 8 8"/><path d="M12 8c1.4-2.7 3.5-4.2 6-4"/><path d="M12 8c-1.2-2.2-3-3.4-5.5-3.5"/></svg>
+          </div>
+          <h4>Natural Flavours</h4>
+          <p>Bright flavours that feel fresh, not heavy.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon home-svg-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M12 3 5 6v5.2c0 4.5 2.8 8.2 7 9.8 4.2-1.6 7-5.3 7-9.8V6l-7-3Z"/><path d="m8.8 12.3 2.1 2.1 4.5-4.8"/></svg>
+          </div>
+          <h4>Hygienic Service</h4>
+          <p>Clean handling from preparation to pickup.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section home-section-white">
+    <div class="container">
+      <h2 class="section-title">Customer Reviews</h2>
+      <p class="section-subtitle">What regular customers say about Doctor Na Gola.</p>
+      <div class="reviews-grid" id="reviewsContainer"></div>
+      <div class="home-review-form">
+        <h3>Write a Review</h3>
+        <form onsubmit="submitReview(event)">
+          <div class="form-group">
+            <label>Rating</label>
+            <div class="star-input home-star-input" id="starRating">
+              <span data-value="1">&#9733;</span>
+              <span data-value="2">&#9733;</span>
+              <span data-value="3">&#9733;</span>
+              <span data-value="4">&#9733;</span>
+              <span data-value="5" class="active">&#9733;</span>
+            </div>
+            <input type="hidden" id="reviewRating" value="5">
+          </div>
+          <div class="home-review-fields">
+            <div class="form-group">
+              <label for="reviewName">Your Name</label>
+              <input type="text" id="reviewName" class="form-input" placeholder="Your Name" required>
+            </div>
+            <div class="form-group">
+              <label for="reviewComment">Your Review</label>
+              <textarea id="reviewComment" class="form-input" placeholder="Share your experience" required></textarea>
+            </div>
+          </div>
+          <button type="submit" class="btn btn-primary" id="submitReviewBtn">Submit Review</button>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <footer id="footer"></footer>
+
+  <script src="js/firebase-config.js"></script>
+  <script src="js/data.js"></script>
+  <script src="js/app.js"></script>
+  <script src="js/home.js"></script>
+</body>
+</html>

@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Panel | Doctor Na Gola</title>
+  
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-database-compat.js"></script>
+  
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  
+  <!-- CSS -->
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/refresh.css">
+
+  <style>
+    :root {
+      --primary-50:  #EFF6FF;
+      --primary-100: #DBEAFE;
+      --primary-200: #BFDBFE;
+      --primary-400: #60A5FA;
+      --primary-600: #2563EB;
+      --primary-800: #1E40AF;
+      --primary-900: #1E3A8A;
+      --bg:          #F0F6FF;
+      --white:       #FFFFFF;
+      --text:        #1E3A8A;
+      --danger:      #DC2626;
+      --adm-accent:  #2563EB;
+      --adm-green:   #16A34A;
+      --adm-text:    #1E3A8A;
+      --adm-muted:   #6B7280;
+      --adm-border:  #BFDBFE;
+      --btn-primary-bg:    #2563EB;
+      --btn-primary-text:  #FFFFFF;
+      --btn-primary-hover: #1D4ED8;
+    }
+
+    /* Make sure login shows and panel hides by default */
+    #loginScreen {
+      display: flex !important;
+    }
+    #adminPanel {
+      display: none !important;
+    }
+    #loginScreen.hidden {
+      display: none !important;
+    }
+    #adminPanel.visible {
+      display: flex !important;
+    }
+
+    /* Login error hidden by default */
+    #loginError {
+      display: none;
+      color: var(--danger);
+      margin-top: 0.75rem;
+      font-size: 0.9rem;
+      font-weight: 600;
+    }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body style="background: var(--bg);">
+
+  <!-- Login Screen -->
+  <div class="admin-login-wrapper" id="loginScreen">
+    <div class="admin-login-card fade-in">
+      <img src="assets/logo.png" alt="Logo"
+        style="width: 80px; height: 80px; border-radius: 50%; margin: 0 auto 1rem; display: block;"
+        onerror="this.style.display='none'">
+      <h2 data-t="admin_login">Admin Login</h2>
+      <p>Doctor Na Gola</p>
+      
+      <form onsubmit="handleLogin(event)">
+        <input type="password" id="adminPassword" class="form-input"
+          style="text-align: center; margin-bottom: 1rem;"
+          placeholder="Enter Password" required>
+
+        <div style="display:flex; align-items:center; gap:0.5rem; margin-bottom:1rem; justify-content:center;">
+          <input type="checkbox" id="savePassword" onchange="toggleSavePassword()">
+          <label for="savePassword" style="font-size:0.85rem; color:var(--primary-800); cursor:pointer;">
+            Remember Password
+          </label>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-block">Login</button>
+        <div id="loginError">❌ Wrong password! Try again.</div>
+      </form>
+      
+      <a href="index.html" class="btn btn-outline"
+        style="margin-top: 1.5rem; display:block; text-align:center; color: var(--primary-800); border-color: var(--primary-800);">
+        ← Back to Website
+      </a>
+    </div>
+  </div>
+
+  <!-- Admin Panel (hidden until login) -->
+  <div id="adminPanel" class="admin-panel">
+    
+    <!-- Top Navbar -->
+    <nav class="navbar" style="background: var(--white); box-shadow: var(--shadow-sm);">
+      <div class="nav-container">
+        <div class="nav-logo">
+          <img src="assets/logo.png" alt="Logo" onerror="this.style.display='none'">
+          <span class="nav-logo-text">Admin Panel</span>
+        </div>
+        <div class="nav-actions">
+          <button class="nav-lang-btn" onclick="if(typeof toggleLang==='function') toggleLang(); if(typeof updateCharts==='function') updateCharts();">🌐 Lang</button>
+          <button class="btn btn-outline btn-sm"
+            style="color: var(--danger); border-color: var(--danger);"
+            onclick="logout()">Logout</button>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Sidebar -->
+    <aside class="admin-sidebar">
+      <div class="admin-sidebar-link active" data-tab="dashboard" onclick="switchTab('dashboard')">
+        📊 <span>Dashboard</span>
+      </div>
+      <div class="admin-sidebar-link" data-tab="orders" onclick="switchTab('orders')">
+        🛍️ <span>Orders</span>
+        <span id="newOrderBadge"
+          style="background: var(--danger); color: white; border-radius: 10px; padding: 2px 6px; font-size: 0.7rem; margin-left: auto; display: none;">
+          New
+        </span>
+      </div>
+      <div class="admin-sidebar-link" data-tab="products" onclick="switchTab('products')">
+        🍧 <span>Products CMS</span>
+      </div>
+      <div class="admin-sidebar-link" data-tab="notifications" onclick="switchTab('notifications')">
+        🔔 <span>Notifications</span>
+      </div>
+      <div class="admin-sidebar-link" data-tab="reviews" onclick="switchTab('reviews')">
+        ⭐ <span>Reviews</span>
+      </div>
+      <div class="admin-sidebar-link" data-tab="contacts" onclick="switchTab('contacts')">
+        ✉️ <span>Messages</span>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="admin-main">
+      
+      <!-- Dashboard Tab -->
+      <div id="tab-dashboard" class="admin-tab active">
+        <h2 style="margin-bottom: 1.5rem; color: var(--text-dark);">Overview</h2>
+        
+        <div class="stats-grid">
+          <div class="stat-card glass-card">
+            <h3 style="font-size: 1rem; color: var(--text-light);">Today's Orders</h3>
+            <div class="stat-value" id="statTodayOrders">0</div>
+          </div>
+          <div class="stat-card glass-card">
+            <h3 style="font-size: 1rem; color: var(--text-light);">Today's Revenue</h3>
+            <div class="stat-value" id="statTodayRevenue">₹0</div>
+          </div>
+          <div class="stat-card glass-card">
+            <h3 style="font-size: 1rem; color: var(--text-light);">Total Revenue</h3>
+            <div class="stat-value" id="statTotalRev">₹0</div>
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem; margin-top: 2rem;">
+          <div class="glass-card">
+            <h3 style="margin-bottom: 1rem;">Revenue (Last 7 Days)</h3>
+            <div style="position: relative; height: 300px; width: 100%;">
+              <canvas id="revenueChart"></canvas>
+            </div>
+          </div>
+          <div class="glass-card">
+            <h3 style="margin-bottom: 1rem;">Popular Categories</h3>
+            <div style="position: relative; height: 300px; width: 100%;">
+              <canvas id="categoryChart"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Products CMS Tab -->
+      <div id="tab-products" class="admin-tab">
+        <div class="admin-products-head">
+          <div>
+            <p class="admin-eyebrow">Menu CMS</p>
+            <h2>Products & Categories</h2>
+            <p>Manage Stick, Super, Premium, Shahi, flavours, and specials from one clean place.</p>
+          </div>
+          <button class="btn btn-primary btn-sm admin-add-product-btn" onclick="openProductEditor()">+ Add Product</button>
+        </div>
+
+        <div class="admin-product-stats" id="adminProductStats"></div>
+
+        <div class="admin-product-filters">
+          <button class="admin-filter-pill active" data-product-filter="all" onclick="setProductManagerFilter('all', this)">All</button>
+          <button class="admin-filter-pill" data-product-filter="category" onclick="setProductManagerFilter('category', this)">Categories</button>
+          <button class="admin-filter-pill" data-product-filter="flavor" onclick="setProductManagerFilter('flavor', this)">Flavours</button>
+          <button class="admin-filter-pill" data-product-filter="special" onclick="setProductManagerFilter('special', this)">Specials</button>
+        </div>
+
+        <div class="admin-products-grid" id="adminProductsList">
+          <!-- Rendered via JS -->
+        </div>
+      </div>
+
+      <!-- Notifications CMS Tab -->
+      <div id="tab-notifications" class="admin-tab">
+        <h2 style="margin-bottom: 1.5rem; color: var(--text-dark);">Send Global Notification</h2>
+        <div class="glass-card" style="max-width: 600px;">
+          <form onsubmit="handleSendNotification(event)">
+            <div class="form-group" style="margin-bottom: 1rem;">
+              <label style="display:block; margin-bottom:0.5rem; font-weight:bold;">Notification Title</label>
+              <input type="text" id="notifTitle" class="form-input" placeholder="e.g. Weekend Special Offer!" required>
+            </div>
+            <div class="form-group" style="margin-bottom: 1rem;">
+              <label style="display:block; margin-bottom:0.5rem; font-weight:bold;">Message Content</label>
+              <textarea id="notifMsg" class="form-input" rows="3" placeholder="Get 20% off on all premium golas this weekend!" required></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary btn-block" id="btnSendNotif">Broadcast Notification 📢</button>
+          </form>
+        </div>
+      </div>
+
+      <!-- Orders Tab -->
+      <div id="tab-orders" class="admin-tab">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+          <h2 style="color: var(--text-dark);">Recent Orders</h2>
+        </div>
+        <div id="ordersCardsGrid" style="display: flex; flex-direction: column; gap: 1rem;">
+          <!-- Rendered via JS -->
+        </div>
+      </div>
+
+      <!-- Reviews Tab -->
+      <div id="tab-reviews" class="admin-tab">
+        <h3 style="margin-bottom: 1.5rem; color: var(--text);">Reviews</h3>
+        <div id="reviewsListContainer" style="max-width: 800px;"></div>
+      </div>
+
+      <!-- Contacts Tab -->
+      <div id="tab-contacts" class="admin-tab">
+        <h3 style="margin-bottom: 1.5rem; color: var(--text);">Messages</h3>
+        <div class="orders-table-wrapper">
+          <table class="orders-table">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Name</th>
+                <th>Phone</th>
+                <th>Message</th>
+              </tr>
+            </thead>
+            <tbody id="contactsTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+    </main>
+  </div>
+  
+  <!-- Audio for new order -->
+  <audio id="notificationSound"
+    src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg"
+    preload="auto"></audio>
+
+  <div class="admin-modal" id="productEditorModal" aria-hidden="true">
+    <div class="admin-modal-card">
+      <div class="admin-modal-head">
+        <div>
+          <p class="admin-eyebrow">Product Editor</p>
+          <h3 id="productEditorTitle">Add Product</h3>
+        </div>
+        <button class="admin-icon-btn" onclick="closeProductEditor()" aria-label="Close">×</button>
+      </div>
+      <form onsubmit="saveProductFromEditor(event)">
+        <input type="hidden" id="editProductKey">
+        <input type="hidden" id="editProductSource">
+        <div class="admin-form-grid">
+          <div class="form-group">
+            <label for="editProductType">Type</label>
+            <select id="editProductType" class="form-input" onchange="onProductEditorTypeChange()">
+              <option value="category">Category / Size</option>
+              <option value="flavor">Flavour</option>
+              <option value="special">Dr. Special</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="editProductEmoji">Icon</label>
+            <input type="text" id="editProductEmoji" class="form-input" placeholder="🍧">
+          </div>
+          <div class="form-group">
+            <label for="editProductName">Name</label>
+            <input type="text" id="editProductName" class="form-input" placeholder="Premium" required>
+          </div>
+          <div class="form-group">
+            <label for="editProductPrice">Price</label>
+            <input type="number" id="editProductPrice" class="form-input" min="0" placeholder="150">
+          </div>
+          <div class="form-group admin-desc-field">
+            <label for="editProductDesc">Description</label>
+            <textarea id="editProductDesc" class="form-input" rows="3" placeholder="Short description"></textarea>
+          </div>
+          <div class="form-group admin-color-field">
+            <label for="editProductColor">Colour</label>
+            <input type="color" id="editProductColor" class="form-input" value="#2563EB">
+          </div>
+        </div>
+        <div class="admin-modal-actions">
+          <button type="button" class="btn btn-outline btn-sm" onclick="closeProductEditor()">Cancel</button>
+          <button type="submit" class="btn btn-primary btn-sm">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- JS -->
+  <script src="js/firebase-config.js"></script>
+  <script src="js/data.js"></script>
+  <script src="js/app.js"></script>
+  <script src="js/admin.js"></script>
+</body>
+</html>

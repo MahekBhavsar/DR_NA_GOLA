@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="gu">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cart & Checkout | Doctor Na Gola</title>
+
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-database-compat.js"></script>
+
+  <!-- CSS -->
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- Navbar -->
+  <nav id="navbar"></nav>
+
+  <!-- Header -->
+  <header class="page-header fade-in" style="padding: 5rem 0 2rem;">
+    <div class="container">
+      <h1 data-t="checkout_title">Checkout</h1>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="section" style="padding-top: 0; min-height: 60vh;">
+    <div class="container">
+
+      <!-- Empty Cart State -->
+      <div id="emptyCart" class="cart-empty fade-in" style="display: none;">
+        <div class="cart-empty-icon">🛒</div>
+        <h3 data-t="cart_empty">Your cart is empty</h3>
+        <p data-t="cart_empty_sub">Add some delicious golas from our menu!</p>
+        <a href="menu.html" class="btn btn-primary">
+          <span data-t="cart_browse">Browse Menu</span>
+        </a>
+      </div>
+
+      <!-- Cart Layout -->
+      <div id="cartLayout" class="cart-layout fade-in" style="display: none;">
+
+        <!-- Left: Checkout Form -->
+        <div>
+          <div class="card">
+            <h3 style="margin-bottom: 1.5rem; color: var(--text);" data-t="checkout_title">Checkout Details</h3>
+
+            <form id="checkoutForm" onsubmit="handleCheckout(event)">
+
+              <!-- Name -->
+              <div class="form-group">
+                <label data-t="checkout_name">Your Name</label>
+                <input type="text" id="custName" class="form-input" required
+                  placeholder="Your Name" autocomplete="name">
+              </div>
+
+              <!-- Phone -->
+              <div class="form-group">
+                <label data-t="checkout_phone">Phone Number</label>
+                <input type="tel" id="custPhone" class="form-input" required
+                  pattern="[0-9]{10}" maxlength="10" inputmode="numeric"
+                  placeholder="10-digit phone number" autocomplete="tel">
+              </div>
+
+              <!-- Order Type -->
+              <div class="form-group">
+                <label>Order Type</label>
+                <div class="order-type-options">
+                  <div class="order-type-btn" id="typeParcel" onclick="setOrderType('parcel')">
+                    🛒 Parcel <span style="font-size:0.8rem; opacity:0.8;">(+₹10)</span>
+                  </div>
+                  <div class="order-type-btn selected" id="typePickup" onclick="setOrderType('pickup')">
+                    🏪 Pickup from Shop <span style="font-size:0.8rem; opacity:0.8;">(Free)</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Payment Method -->
+              <div class="form-group">
+                <label data-t="checkout_payment">Payment Method</label>
+                <div class="payment-options">
+
+                  <label class="payment-option selected" id="payCash">
+                    <input type="radio" name="payment" value="cash" checked onchange="setPayment('cash')">
+                    <div class="payment-icon">💵</div>
+                    <div class="payment-info">
+                      <div class="pay-name" data-t="checkout_cash">Cash on Pickup/Delivery</div>
+                    </div>
+                  </label>
+
+                  <label class="payment-option" id="payQr">
+                    <input type="radio" name="payment" value="qr" onchange="setPayment('qr')">
+                    <div class="payment-icon">🤳</div>
+                    <div class="payment-info">
+                      <div class="pay-name" data-t="checkout_qr">QR Code (Scan at Shop)</div>
+                    </div>
+                  </label>
+
+                  <label class="payment-option" id="payUpi">
+                    <input type="radio" name="payment" value="upi" onchange="setPayment('upi')">
+                    <div class="payment-icon">📲</div>
+                    <div class="payment-info">
+                      <div class="pay-name" data-t="checkout_upi">UPI / Google Pay</div>
+                      <div class="pay-desc">Pay directly from your phone</div>
+                    </div>
+                  </label>
+
+                </div>
+              </div>
+
+              <!-- Hidden submit — triggered by button outside form scope -->
+              <button type="submit" style="display:none;" id="hiddenSubmit"></button>
+            </form>
+          </div>
+        </div>
+
+        <!-- Right: Bill Summary -->
+        <div>
+          <div class="cart-summary" style="background: linear-gradient(to bottom, var(--white), #f9f9f9); border: 1px solid #ddd; border-top: 4px solid var(--accent); position: sticky; top: 90px; border-radius: var(--radius-lg);">
+            <h3 style="border-bottom: 2px dashed #ddd; padding-bottom: 1rem; margin-bottom: 1rem; text-align: center;">🧾 Your Bill</h3>
+
+            <!-- Cart Items List -->
+            <div class="cart-items" id="cartItems" style="margin-bottom: 1.5rem; max-height: 400px; overflow-y: auto; padding-right: 0.5rem;">
+              <!-- Rendered by cart.js -->
+            </div>
+
+            <!-- Price Summary -->
+            <div class="price-summary" style="background: transparent; padding: 0; border-top: 2px dashed #ddd; padding-top: 1rem; margin-top: 0;">
+              <div class="price-row">
+                <span data-t="cart_subtotal">Subtotal:</span>
+                <span id="sumSubtotal">₹0</span>
+              </div>
+              <div class="price-row" id="parcelRow" style="display: none;">
+                <span data-t="cart_parcel">Parcel Charge:</span>
+                <span id="sumParcel">₹10</span>
+              </div>
+              <div class="price-total" style="border-top: 2px solid var(--text); padding-top: 1rem; margin-top: 1rem; font-size: 1.5rem;">
+                <span data-t="cart_total">Total:</span>
+                <span id="sumTotal" style="color: var(--accent);">₹0</span>
+              </div>
+            </div>
+
+            <!-- Place Order Button -->
+            <button
+              type="button"
+              onclick="handleCheckout(event)"
+              class="btn btn-primary btn-block"
+              style="margin-top: 2rem; font-size: 1.2rem; padding: 1rem;"
+              id="placeOrderBtn">
+              ✅ <span data-t="checkout_place">Place Order</span>
+            </button>
+
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Success Screen -->
+      <div id="successScreen" class="order-success premium-success-card" style="display: none;">
+        <div class="success-icon premium-icon-large">🎉</div>
+        <h2 data-t="checkout_success" style="color: var(--primary-900);">Order Placed Successfully!</h2>
+        <p style="color: var(--text-light); margin-bottom: 1.5rem;">
+          Thank you, <strong id="displayCustomerName" style="color: var(--primary-800); font-size: 1.2rem;"></strong>!
+        </p>
+
+        <div style="background: linear-gradient(135deg, #fff7d6, #fdfbf7); border: 2px dashed #d4af37; padding: 1.5rem; border-radius: var(--radius-lg); display: inline-block; margin-bottom: 1.5rem;">
+          <div style="font-size: 0.9rem; color: var(--text-light); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 0.5rem;">Your Order ID</div>
+          <div class="order-id" id="displayOrderId" style="margin: 0; background: transparent; padding: 0; color: #2b113b; font-size: 1.8rem;">—</div>
+        </div>
+
+        <p>Please keep your order ID for reference when collecting your gola.</p>
+
+        <!-- QR Instructions -->
+        <div id="qrInstructions" style="display: none; margin: 1.5rem 0; padding: 1.5rem; background: var(--primary-50); border-radius: var(--radius-md);">
+          <h4>Scan to Pay</h4>
+          <p style="margin-bottom: 1rem;">Please scan this QR code at the shop to complete your payment.</p>
+          <img src="assets/qr-code.png" alt="Payment QR"
+            style="width: 200px; height: 200px; margin: 0 auto; display: block; border-radius: var(--radius-sm); border: 2px solid var(--primary-200);"
+            onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 fill=%22%23f0f0f0%22/><text x=%2250%25%22 y=%2255%25%22 text-anchor=%22middle%22 font-size=%2210%22 fill=%22%23999%22>QR Here</text></svg>'">
+        </div>
+
+        <!-- Action Buttons -->
+        <div style="margin-top: 2rem; display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+          <a href="track.html" class="btn btn-primary" id="trackOrderBtn">
+            🔍 <span>Track Order</span>
+          </a>
+          <a href="index.html" class="btn btn-outline" style="color: var(--primary-800); border-color: var(--primary-800);">
+            <span data-t="common_back_home">Back to Home</span>
+          </a>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer id="footer"></footer>
+
+  <!-- JS — order matters! -->
+  <script src="js/firebase-config.js"></script>
+  <script src="js/data.js"></script>
+  <script src="js/app.js"></script>
+  <script src="js/cart.js"></script>
+</body>
+</html>
