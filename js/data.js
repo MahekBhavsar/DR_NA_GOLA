@@ -36,11 +36,11 @@ const CATEGORIES = [
 
 // Top 5 Dr. Specials (₹250 each)
 const SPECIALS = [
-  { id: 'sp-double-dryfruit', name: { en: 'Double Dryfruit', gu: 'ડબલ ડ્રાઈફ્રૂટ' }, price: 250, emoji: '🥜', color: '#8D6E63', desc: { en: 'Loaded with double dryfruit toppings', gu: 'ડબલ ડ્રાઈફ્રૂટ ટોપિંગ સાથે' } },
-  { id: 'sp-shredded-dryfruit', name: { en: 'Shredded Dryfruit', gu: 'શ્રેડેડ ડ્રાઈફ્રૂટ' }, price: 250, emoji: '🌰', color: '#A1887F', desc: { en: 'Fine shredded dryfruit mix', gu: 'ફાઇન શ્રેડેડ ડ્રાઈફ્રૂટ મિક્સ' } },
-  { id: 'sp-kaju-gulkand', name: { en: 'Kaju Gulkand', gu: 'કાજુ ગુલકંદ' }, price: 250, emoji: '🌹', color: '#E91E63', desc: { en: 'Premium kaju with rose gulkand', gu: 'પ્રીમિયમ કાજુ ગુલકંદ સાથે' } },
-  { id: 'sp-double-double', name: { en: 'Double Double', gu: 'ડબલ ડબલ' }, price: 250, emoji: '✨', color: '#FFD600', desc: { en: 'Double everything – double fun!', gu: 'ડબલ બધું – ડબલ મજા!' } },
-  { id: 'sp-mix-masala', name: { en: 'Mix Masala', gu: 'મિક્સ મસાલા' }, price: 250, emoji: '🌶️', color: '#FF5722', desc: { en: 'Special masala blend topping', gu: 'સ્પેશિયલ મસાલા બ્લેન્ડ ટોપિંગ' } },
+  { id: 'sp-double-dryfruit',   name: { en: 'Double Dryfruit',   gu: 'ડબલ ડ્રાઈફ્રૂટ' },   price: 250, emoji: '🥜', img: 'assets/RoastedDryfruits.png', color: '#8D6E63', desc: { en: 'Loaded with double dryfruit toppings', gu: 'ડબલ ડ્રાઈફ્રૂટ ટોપિંગ સાથે' } },
+  { id: 'sp-shredded-dryfruit', name: { en: 'Shredded Dryfruit', gu: 'શ્રેડેડ ડ્રાઈફ્રૂટ' }, price: 250, emoji: '🌰', img: 'assets/DrSpecial.png',        color: '#A1887F', desc: { en: 'Fine shredded dryfruit mix',      gu: 'ફાઇન શ્રેડેડ ડ્રાઈફ્રૂટ મિક્સ' } },
+  { id: 'sp-kaju-gulkand',      name: { en: 'Kaju Gulkand',      gu: 'કાજુ ગુલકંદ' },        price: 250, emoji: '🌹', img: 'assets/Kaju-gulkand.png',     color: '#E91E63', desc: { en: 'Premium kaju with rose gulkand', gu: 'પ્રીમિયમ કાજુ ગુલકંદ સાથે' } },
+  { id: 'sp-double-double',     name: { en: 'Double Double',     gu: 'ડબલ ડબલ' },             price: 250, emoji: '✨', img: 'assets/Double-Trouble.png',   color: '#FFD600', desc: { en: 'Double everything – double fun!', gu: 'ડબલ બધું – ડબલ મજા!' } },
+  { id: 'sp-mix-masala',        name: { en: 'Mix Masala',        gu: 'મિક્સ મસાલા' },         price: 250, emoji: '🌶️', img: 'assets/MixMasala.png',        color: '#FF5722', desc: { en: 'Special masala blend topping',  gu: 'સ્પેશિયલ મસાલા બ્લેન્ડ ટોપિંગ' } },
 ];
 
 const PARCEL_CHARGE = 10;

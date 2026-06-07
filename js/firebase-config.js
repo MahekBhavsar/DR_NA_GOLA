@@ -16,10 +16,29 @@ const firebaseConfig = {
 // Initialize Firebase
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
+let storage;
+try {
+  storage = firebase.storage();
+} catch (e) {
+  console.warn('Firebase Storage not enabled or loaded properly', e);
+}
 
 // Helper functions for Firebase operations
 const DB = {
+  // Video Upload
+  async uploadVideo(file) {
+    if (!storage) throw new Error("Storage not configured");
+    const storageRef = storage.ref(`reviews_videos/${Date.now()}_${file.name}`);
+    const snapshot = await storageRef.put(file);
+    return await snapshot.ref.getDownloadURL();
+  },
   // Orders
+  async getNextOrderId() {
+    const today = new Date().toISOString().split('T')[0];
+    const counterRef = db.ref(`analytics/dailyOrdersCounter/${today}`);
+    const { snapshot } = await counterRef.transaction(current => (current || 0) + 1);
+    return snapshot.val();
+  },
   pushOrder(order) {
     return db.ref('orders').push(order);
   },
@@ -145,6 +164,15 @@ const DB = {
         notif = { id: child.key, ...child.val() };
       });
       callback(notif);
+    });
+  },
+  listenAllNotifications(callback) {
+    db.ref('notifications').orderByChild('timestamp').limitToLast(25).on('value', snap => {
+      const notifications = [];
+      snap.forEach(child => {
+        notifications.push({ id: child.key, ...child.val() });
+      });
+      callback(notifications.reverse());
     });
   }
 };

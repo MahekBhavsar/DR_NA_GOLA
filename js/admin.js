@@ -4,6 +4,7 @@
 
 let allOrders           = [];
 let allReviews          = [];
+let allNotifications    = [];
 let revChartInstance    = null;
 let flavChartInstance   = null;
 let typeChartInstance   = null;
@@ -132,12 +133,22 @@ function initAdmin() {
     DB.listenProducts(function(products) {
       window.allProducts = products;
       renderAdminProducts();
+      renderAllProductTables();
     });
+  } else {
+    renderAllProductTables();
   }
 
   if (typeof DB.listenContacts === 'function') {
     DB.listenContacts(function(contacts) {
       renderContacts(contacts);
+    });
+  }
+
+  if (typeof DB.listenAllNotifications === 'function') {
+    DB.listenAllNotifications(function(notifications) {
+      allNotifications = notifications || [];
+      renderAdminNotifications();
     });
   }
 }
@@ -212,94 +223,147 @@ function renderOrders() {
     pending: { bg: '#FFF9C4', border: '#F9A825', text: '#7A4B00', label: 'Pending' },
     processing: { bg: '#FFF3E0', border: '#FB8C00', text: '#7C2D12', label: 'Processing' },
     completed: { bg: '#E8F5E9', border: '#22C55E', text: '#166534', label: 'Done' },
+    paid: { bg: '#F3E8FF', border: '#A855F7', text: '#581C87', label: 'Paid' },
   };
 
-  container.innerHTML = `
-    <table style="width:100%;border-collapse:separate;border-spacing:0 10px;">
-      <thead>
-        <tr style="background:none;">
-          <th style="text-align:left;padding:0.5rem 1rem;font-size:0.75rem;text-transform:uppercase;letter-spacing:1px;color:#888;">Order ID</th>
-          <th style="text-align:left;padding:0.5rem 1rem;font-size:0.75rem;text-transform:uppercase;letter-spacing:1px;color:#888;">Customer</th>
-          <th style="text-align:left;padding:0.5rem 1rem;font-size:0.75rem;text-transform:uppercase;letter-spacing:1px;color:#888;">Type</th>
-          <th style="text-align:left;padding:0.5rem 1rem;font-size:0.75rem;text-transform:uppercase;letter-spacing:1px;color:#888;">Total</th>
-          <th style="text-align:left;padding:0.5rem 1rem;font-size:0.75rem;text-transform:uppercase;letter-spacing:1px;color:#888;">Status</th>
-          <th style="text-align:left;padding:0.5rem 1rem;font-size:0.75rem;text-transform:uppercase;letter-spacing:1px;color:#888;">Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        ${orders.map(order => {
-          const time = new Date(order.timestamp).toLocaleString('en-IN', {
-            day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit'
-          });
-          const pm = order.paymentMethod || 'cash';
-          const sc = statusColors[order.status] || statusColors.pending;
-          const typeIcon = order.orderType === 'parcel' ? 'Parcel (+Rs.10)' : 'Pickup';
+  const renderTable = (tableOrders, title, emptyMsg) => {
+    if (tableOrders.length === 0) {
+      return `<h3 style="margin: 1.5rem 0 0.5rem 0; font-size: 1.1rem; color: var(--primary-900);">${title}</h3>
+              <div class="orders-table-wrapper" style="text-align:center;padding:2rem;color:#888;margin-bottom:2rem;">${emptyMsg}</div>`;
+    }
 
-          const itemsHTML = (order.items || []).map(i => {
-            const name = i.name && i.name.en ? i.name.en : (i.name || 'Item');
-            return `<tr style="border-bottom: 1px dashed #eee;">
-              <td style="padding:0.3rem 0.6rem;font-size:0.88rem;">${i.emoji || '🍧'} ${name}</td>
-              <td style="padding:0.3rem 0.6rem;font-size:0.88rem;text-align:center;font-weight:700;">×${i.qty}</td>
-              <td style="padding:0.3rem 0.6rem;font-size:0.88rem;text-align:right;color:var(--accent);font-weight:700;">₹${i.totalPrice}</td>
-            </tr>`;
-          }).join('');
+    const tbody = tableOrders.map(order => {
+      const time = new Date(order.timestamp).toLocaleString('en-IN', {
+        day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit'
+      });
+      const pm = order.paymentMethod || 'cash';
+      const sc = statusColors[order.status] || statusColors.pending;
+      const typeIcon = order.orderType === 'parcel' ? 'Parcel (+Rs.10)' : 'Pickup';
 
-          return `
-          <tr style="background:${sc.bg};border-radius:12px;">
-            <td style="padding:1rem;border-radius:12px 0 0 0;border-left:5px solid ${sc.border};border-top:1px solid ${sc.border}20;border-bottom:1px solid ${sc.border}20;">
-              <div style="font-family:monospace;font-weight:700;color:${sc.text};font-size:0.95rem;">${order.orderId}</div>
-              <div style="font-size:0.78rem;color:#888;margin-top:2px;">${time}</div>
-            </td>
-            <td style="padding:1rem;border-top:1px solid ${sc.border}20;border-bottom:1px solid ${sc.border}20;">
-              <div style="font-weight:700;font-size:1.05rem;color:#1a1a1a;">${order.customerName}</div>
-              <div style="font-size:0.85rem;color:#555;">📞 ${order.phone}</div>
-            </td>
-            <td style="padding:1rem;border-top:1px solid ${sc.border}20;border-bottom:1px solid ${sc.border}20;">
-              <div style="font-size:0.9rem;font-weight:600;">${typeIcon}</div>
-              <div style="font-size:0.8rem;color:#888;">${payIcons[pm] || '💳'} ${pm.toUpperCase()}</div>
-            </td>
-            <td style="padding:1rem;border-top:1px solid ${sc.border}20;border-bottom:1px solid ${sc.border}20;">
-              <div style="font-size:1.4rem;font-weight:900;color:#1a1a1a;">₹${order.total}</div>
-              <div>
-                <table style="margin-top:0.5rem;background:rgba(255,255,255,0.7);border-radius:8px;width:100%;min-width:180px;">
-                  <tbody>${itemsHTML}</tbody>
-                </table>
-              </div>
-            </td>
-            <td style="padding:1rem;border-top:1px solid ${sc.border}20;border-bottom:1px solid ${sc.border}20;">
-              <div class="admin-status-actions" role="group" aria-label="Order status">
-                <button class="status-action-btn ${order.status === 'pending' ? 'is-active' : ''}" onclick="updateOrderStatus('${order.id}', 'pending')">Pending</button>
-                <button class="status-action-btn ${order.status === 'processing' ? 'is-active' : ''}" onclick="updateOrderStatus('${order.id}', 'processing')">Processing</button>
-                <button class="status-action-btn status-done ${order.status === 'completed' ? 'is-active' : ''}" onclick="updateOrderStatus('${order.id}', 'completed')">Done</button>
-              </div>
-            </td>
-            <td style="padding:1rem;border-radius:0 12px 12px 0;border-top:1px solid ${sc.border}20;border-bottom:1px solid ${sc.border}20;border-right:1px solid ${sc.border}20;">
-              <div style="display:flex;gap:0.5rem;flex-direction:column;">
-                <button style="background:#25D366;color:white;border:none;border-radius:8px;padding:0.4rem 0.8rem;cursor:pointer;font-weight:600;font-size:0.85rem;" onclick="notifyAdmin('${order.id}')">WhatsApp</button>
-                <button style="background:#fee2e2;color:#dc2626;border:none;border-radius:8px;padding:0.4rem 0.8rem;cursor:pointer;font-weight:600;font-size:0.85rem;" onclick="deleteOrder('${order.id}')">🗑 Delete</button>
-              </div>
-            </td>
-          </tr>
-          `;
-        }).join('')}
-      </tbody>
-    </table>
-  `;
+      const itemsHTML = (order.items || []).map(i => {
+        const name = i.name && i.name.en ? i.name.en : (i.name || 'Item');
+        return `<tr style="border-bottom: 1px dashed #eee;">
+          <td style="padding:0.3rem 0.6rem;font-size:0.88rem;border:none;">${i.emoji || '🍧'} ${name}</td>
+          <td style="padding:0.3rem 0.6rem;font-size:0.88rem;text-align:center;font-weight:700;border:none;">×${i.qty}</td>
+          <td style="padding:0.3rem 0.6rem;font-size:0.88rem;text-align:right;color:var(--adm-accent);font-weight:700;border:none;">₹${i.totalPrice}</td>
+        </tr>`;
+      }).join('');
+
+      return `
+      <tr style="background:${sc.bg};">
+        <td style="border-left:5px solid ${sc.border};">
+          <div style="font-family:monospace;font-weight:700;color:${sc.text};font-size:0.95rem;">${order.orderId}</div>
+          <div style="font-size:0.78rem;color:#888;margin-top:2px;">${time}</div>
+        </td>
+        <td>
+          <div style="font-weight:700;font-size:1.05rem;color:#1a1a1a;">${order.customerName}</div>
+          <div style="font-size:0.85rem;color:#555;">📞 ${order.phone}</div>
+        </td>
+        <td>
+          <div style="font-size:0.9rem;font-weight:600;">${typeIcon}</div>
+          <div style="font-size:0.8rem;color:#888;">${payIcons[pm] || '💳'} ${pm.toUpperCase()}</div>
+        </td>
+        <td>
+          <div style="font-size:1.4rem;font-weight:900;color:#1a1a1a;">₹${order.total}</div>
+          <div>
+            <table style="margin-top:0.5rem;background:rgba(255,255,255,0.7);border-radius:8px;width:100%;min-width:180px;border-collapse:collapse;">
+              <tbody>${itemsHTML}</tbody>
+            </table>
+          </div>
+        </td>
+        <td>
+          <div class="admin-status-actions" role="group" aria-label="Order status" style="display:flex; flex-wrap:wrap; gap:0.25rem;">
+            <button class="status-action-btn ${order.status === 'pending' ? 'is-active' : ''}" 
+              style="${order.status === 'pending' ? 'background:#F59E0B; color:white; border-color:#F59E0B;' : ''}"
+              onclick="updateOrderStatus('${order.id}', 'pending', this)">Pending</button>
+            <button class="status-action-btn ${order.status === 'processing' ? 'is-active' : ''}" 
+              style="${order.status === 'processing' ? 'background:#3B82F6; color:white; border-color:#3B82F6;' : ''}"
+              onclick="updateOrderStatus('${order.id}', 'processing', this)">Processing</button>
+            <button class="status-action-btn ${order.status === 'completed' ? 'is-active' : ''}" 
+              style="${order.status === 'completed' ? 'background:#10B981; color:white; border-color:#10B981;' : ''}"
+              onclick="updateOrderStatus('${order.id}', 'completed', this)">Done</button>
+            <button class="status-action-btn ${order.status === 'paid' ? 'is-active' : ''}" 
+              style="${order.status === 'paid' ? 'background:#A855F7; color:white; border-color:#A855F7;' : ''}"
+              onclick="updateOrderStatus('${order.id}', 'paid', this)">Payment Done</button>
+          </div>
+        </td>
+        <td>
+          <div style="display:flex;gap:0.5rem;flex-direction:column;">
+            <button style="background:#25D366;color:white;border:none;border-radius:8px;padding:0.4rem 0.8rem;cursor:pointer;font-weight:600;font-size:0.85rem;" onclick="notifyAdmin('${order.id}')">Admin WA</button>
+            <button style="background:#fee2e2;color:#dc2626;border:none;border-radius:8px;padding:0.4rem 0.8rem;cursor:pointer;font-weight:600;font-size:0.85rem;" onclick="deleteOrder('${order.id}')">🗑 Delete</button>
+          </div>
+        </td>
+      </tr>
+      `;
+    }).join('');
+
+    return `
+      <h3 style="margin: 1.5rem 0 0.5rem 0; font-size: 1.1rem; color: var(--primary-900);">${title}</h3>
+      <div class="orders-table-wrapper" style="margin-bottom:2rem;">
+        <table class="orders-table">
+          <thead>
+            <tr>
+              <th style="width:15%;">Order ID</th>
+              <th style="width:20%;">Customer</th>
+              <th style="width:15%;">Type</th>
+              <th style="width:25%;">Items & Total</th>
+              <th style="width:15%;">Status</th>
+              <th style="width:10%;">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${tbody}
+          </tbody>
+        </table>
+      </div>
+    `;
+  };
+
+  const pendingOrders = orders.filter(o => o.status === 'pending');
+  const activeOrders = orders.filter(o => o.status === 'processing' || o.status === 'completed');
+  const paidOrders = orders.filter(o => o.status === 'paid');
+
+  container.innerHTML = 
+    renderTable(pendingOrders, '🟡 Pending Orders', 'No pending orders.') +
+    renderTable(activeOrders, '🔵 Processing & Done', 'No active orders.') +
+    renderTable(paidOrders, '🟣 Payment Done', 'No paid orders.');
 }
 
-
-
-function updateOrderStatus(orderId, status) {
+function updateOrderStatus(orderId, status, btn) {
+  if (btn) {
+    btn.dataset.originalText = btn.textContent;
+    btn.textContent = '...';
+  }
   if (typeof DB !== 'undefined' && typeof DB.updateOrderStatus === 'function') {
     DB.updateOrderStatus(orderId, status);
   }
 
   const order = allOrders.find(o => o.id === orderId);
-  if (status === 'completed' && order) {
-    notifyAdmin(orderId, true);
+  if (order) {
+    let customerPhone = order.phone || '';
+    if (customerPhone && !customerPhone.startsWith('91')) {
+      customerPhone = '91' + customerPhone.replace(/\D/g, '');
+    }
+
+    if (status === 'completed') {
+      notifyWebsiteOrderDone(orderId);
+      // WhatsApp notification for "Done" (Pick up)
+      if (customerPhone && customerPhone.length >= 10) {
+        const msg = "Hi " + (order.customerName || "there") + ", your order (" + order.orderId + ") is ready! Please pick up your gola.";
+        window.open('https://wa.me/' + customerPhone + '?text=' + encodeURIComponent(msg), '_blank');
+      }
+    } else if (status === 'paid') {
+      // WhatsApp notification for "Payment Done" (Thank you & Feedback)
+      if (customerPhone && customerPhone.length >= 10) {
+        const feedbackUrl = window.location.origin + "/index.html#feedback";
+        const msg = "Thank you for visiting Doctor Na Gola, " + (order.customerName || "there") + "! We hope you enjoyed your gola. Please leave your feedback here: " + feedbackUrl;
+        window.open('https://wa.me/' + customerPhone + '?text=' + encodeURIComponent(msg), '_blank');
+      }
+    }
   }
 
-  admToast('Status updated: ' + (status === 'completed' ? 'Done' : status));
+  const statusName = status === 'completed' ? 'Done' : (status === 'paid' ? 'Payment Done' : status);
+  admToast('Status updated: ' + statusName);
 }
 
 function deleteOrder(orderId) {
@@ -332,6 +396,30 @@ function notifyAdmin(orderId, automatic) {
 // ═══════════════════════════════════════════
 // DASHBOARD STATS
 // ═══════════════════════════════════════════
+
+function notifyWebsiteOrderDone(orderId) {
+  const order = allOrders.find(o => o.id === orderId);
+  if (!order) return;
+
+  if (typeof DB === 'undefined' || typeof DB.pushNotification !== 'function') {
+    admToast('Website notification could not be sent.', '#DC2626');
+    return;
+  }
+
+  const name = order.customerName || 'there';
+  DB.pushNotification({
+    type: 'order-completed',
+    title: 'Thank you for visiting Doctor Na Gola!',
+    message: 'Hi ' + name + ', your order ' + (order.orderId || '') + ' is completed. We hope you enjoyed your gola. Please share your review on our website.',
+    orderId: order.orderId || '',
+    phone: order.phone || '',
+    timestamp: Date.now()
+  }).then(function() {
+    admToast('Website notification sent to customer.');
+  }).catch(function() {
+    admToast('Website notification could not be sent.', '#DC2626');
+  });
+}
 
 function updateDashboardStats() {
   const today = new Date().toISOString().split('T')[0];
@@ -429,24 +517,38 @@ function updateCharts() {
 // ═══════════════════════════════════════════
 
 function renderAdminProducts() {
-  const tbody = document.getElementById('adminProductsList');
-  if (!tbody || !window.allProducts) return;
+  const container = document.getElementById('adminProductsList');
+  if (!container || !window.allProducts) return;
 
   if (window.allProducts.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding: 2rem;">No products found</td></tr>';
+    container.innerHTML = '<div class="empty-state" style="grid-column:1/-1;"><div class="big">🍡</div>No products found</div>';
     return;
   }
 
-  tbody.innerHTML = window.allProducts.map(p => `
-    <tr>
-      <td><div style="font-weight:bold;">${p.emoji || '🍧'} ${p.name.en || p.name}</div></td>
-      <td>₹${p.price}</td>
-      <td>${p.isSpecial ? 'Special' : 'Regular'}</td>
-      <td>
-        <button class="tbl-btn danger" onclick="deleteProduct('${p.dbId}')">🗑</button>
-      </td>
-    </tr>
-  `).join('');
+  // Use getManagedProducts to filter and format
+  let products = typeof getManagedProducts === 'function' ? getManagedProducts() : window.allProducts.map(p => ({
+    ...p, managerKey: 'firebase:' + p.dbId, managerType: p.isCategory ? 'category' : (p.isSpecial ? 'special' : 'flavor')
+  }));
+
+  if (typeof productManagerFilter !== 'undefined' && productManagerFilter !== 'all') {
+    products = products.filter(p => p.managerType === productManagerFilter);
+  }
+
+  const typeColors = { flavor: '#2563EB', special: '#1E40AF', category: '#60A5FA' };
+  const typeLabels = { flavor: 'Flavor', special: 'Dr. Special', category: 'Size' };
+
+  container.innerHTML = products.map(p => {
+    return `<div class="product-card" style="position:relative;">
+      <div style="position:absolute; top:8px; right:8px; display:flex; gap:4px;">
+        <button class="tbl-btn" style="background:#f3f4f6; color:#1f2937;" onclick="openProductEditor('${p.managerKey}')" title="Edit">✏️</button>
+        <button class="tbl-btn danger" onclick="deleteProduct('${p.dbId}')" title="Delete">🗑</button>
+      </div>
+      <div class="product-emoji">${p.emoji || '🍧'}</div>
+      <div class="product-name">${typeof tObj === 'function' && p.name ? tObj(p.name) : (p.name?.en || p.name)}</div>
+      <div class="product-type" style="color:${typeColors[p.managerType] || '#2563EB'}">${typeLabels[p.managerType] || 'Regular'}</div>
+      ${p.price ? `<div class="product-price">₹${p.price}</div>` : ''}
+    </div>`;
+  }).join('');
 }
 
 function deleteProduct(id) {
@@ -466,7 +568,7 @@ function handleSendNotification(e) {
   const msg = document.getElementById('notifMsg').value;
   
   if (title && msg) {
-    DB.pushNotification({ title, message: msg, timestamp: Date.now() });
+    DB.pushNotification({ type: 'global', title, message: msg, timestamp: Date.now() });
     admToast('Global notification broadcasted! 📢');
     e.target.reset();
   }
@@ -475,6 +577,36 @@ function handleSendNotification(e) {
 // ═══════════════════════════════════════════
 // TOP GOLA
 // ═══════════════════════════════════════════
+
+function renderAdminNotifications() {
+  const container = document.getElementById('adminNotificationsList');
+  if (!container) return;
+
+  if (!allNotifications.length) {
+    container.innerHTML = '<div style="text-align:center;padding:1.25rem;color:var(--adm-muted);">No website notifications yet.</div>';
+    return;
+  }
+
+  container.innerHTML = allNotifications.map(function(notif) {
+    const isOrder = notif.type === 'order-completed';
+    const time = notif.timestamp ? new Date(notif.timestamp).toLocaleString('en-IN', {
+      day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit'
+    }) : '';
+    const tag = isOrder ? 'Customer Order' : 'Global';
+    const tagColor = isOrder ? '#16A34A' : '#2563EB';
+
+    return `
+      <div style="border:1px solid var(--adm-border);border-radius:10px;padding:0.85rem 1rem;background:#fff;display:grid;gap:0.35rem;">
+        <div style="display:flex;justify-content:space-between;gap:0.75rem;align-items:flex-start;">
+          <strong style="color:var(--text);font-size:0.95rem;">${safeText(notif.title || 'Website Notification')}</strong>
+          <span style="background:${tagColor}14;color:${tagColor};border:1px solid ${tagColor}33;border-radius:999px;padding:0.15rem 0.5rem;font-size:0.72rem;font-weight:700;white-space:nowrap;">${tag}</span>
+        </div>
+        <div style="color:#4B5563;font-size:0.85rem;line-height:1.45;">${safeText(notif.message || '')}</div>
+        <div style="color:var(--adm-muted);font-size:0.76rem;">${safeText(time)}</div>
+      </div>
+    `;
+  }).join('');
+}
 
 function renderTopGola() {
   const container = document.getElementById('topGolaList');
@@ -779,16 +911,34 @@ function renderReviews() {
   }
 
   container.innerHTML = allReviews.map(function(r) {
-    return '<div class="review-item">' +
-      '<div style="flex:1;">' +
-        '<div class="review-stars">' + '★'.repeat(r.rating) + '☆'.repeat(5 - r.rating) + '</div>' +
-        '<div class="review-text-body">"' + (r.commentEn || r.comment) + '"</div>' +
-        '<div class="review-meta">' + (r.nameEn || r.name) + ' · ' + new Date(r.timestamp).toLocaleDateString() +
-          (r.isDefault ? '<span style="background:rgba(37,99,235,0.12);color:#2563EB;font-size:0.65rem;padding:1px 6px;border-radius:10px;margin-left:4px;">Default</span>' : '') +
-        '</div>' +
-      '</div>' +
-      '<button class="adm-btn adm-btn-danger" style="font-size:0.75rem;padding:0.3rem 0.6rem;" onclick="deleteReview(\'' + r.id + '\')">🗑</button>' +
-    '</div>';
+    const name = r.nameEn || r.name || 'Anonymous';
+    const initial = name.charAt(0).toUpperCase();
+    const dateStr = new Date(r.timestamp).toLocaleDateString();
+    const stars = '★'.repeat(r.rating) + '☆'.repeat(5 - r.rating);
+    const comment = r.commentEn || r.comment || '';
+    const badgeHtml = r.isDefault ? '<span class="review-badge">Default</span>' : '';
+
+    return `
+      <div class="review-card">
+        <div>
+          <div class="review-stars">${stars}</div>
+          <div class="review-text">"${safeText(comment)}"</div>
+        </div>
+        <div class="review-footer">
+          <div class="review-user-info">
+            <div class="review-avatar">${safeText(initial)}</div>
+            <div class="review-meta-text">
+              <h4>${safeText(name)}</h4>
+              <span>${dateStr}</span>
+            </div>
+          </div>
+          <div style="display: flex; align-items: center; gap: 0.5rem;">
+            ${badgeHtml}
+            <button class="review-delete-btn" onclick="deleteReview('${r.id}')">🗑️</button>
+          </div>
+        </div>
+      </div>
+    `;
   }).join('');
 }
 
@@ -1123,4 +1273,342 @@ function safeText(value) {
   return String(value || '').replace(/[&<>"']/g, function(ch) {
     return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' })[ch];
   });
+}
+
+// ═══════════════════════════════════════════
+// PRODUCT CMS — NEW TABLE-BASED SYSTEM
+// ═══════════════════════════════════════════
+
+function switchProductTab(tab) {
+  ['flavours', 'specials', 'categories'].forEach(function(t) {
+    const el = document.getElementById('ptab-' + t);
+    const btn = document.getElementById('ptab-btn-' + t);
+    if (el) el.style.display = (t === tab) ? 'block' : 'none';
+    if (btn) btn.classList.toggle('active', t === tab);
+  });
+}
+
+function renderAllProductTables() {
+  renderFlavoursTable();
+  renderSpecialsTable();
+  renderCategoriesTable();
+}
+
+// ─── FLAVOURS TABLE ───────────────────────
+function renderFlavoursTable() {
+  const tbody = document.getElementById('flavoursTableBody');
+  if (!tbody) return;
+
+  // Merge static FLAVORS with any firebase-managed ones
+  const flavours = typeof FLAVORS !== 'undefined' ? FLAVORS : [];
+
+  if (flavours.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:2rem;color:#aaa;">No flavours found. Click + Add Flavour.</td></tr>';
+    return;
+  }
+
+  // Category prices from CATEGORIES
+  const cats = typeof CATEGORIES !== 'undefined' ? CATEGORIES : [];
+  const stick   = cats.find(c => c.id === 'stick')   || { price: 60 };
+  const superC  = cats.find(c => c.id === 'super')   || { price: 100 };
+  const premium = cats.find(c => c.id === 'premium') || { price: 150 };
+  const shahi   = cats.find(c => c.id === 'shahi')   || { price: 190 };
+
+  tbody.innerHTML = flavours.map(function(f) {
+    const name = f.name ? (f.name.en || f.name) : f.id;
+    return `<tr>
+      <td style="text-align:center; font-size:1.4rem;">${f.emoji || '🍧'}</td>
+      <td style="font-weight:600;">${safeText(name)}</td>
+      <td style="text-align:center; color:#2563EB; font-weight:700;">₹${stick.price}</td>
+      <td style="text-align:center; color:#7C3AED; font-weight:700;">₹${superC.price}</td>
+      <td style="text-align:center; color:#0891B2; font-weight:700;">₹${premium.price}</td>
+      <td style="text-align:center; color:#B45309; font-weight:700;">₹${shahi.price}</td>
+      <td style="text-align:center;">
+        <button class="tbl-btn" style="background:#EFF6FF;color:#1E40AF;margin-right:4px;" onclick="openFlavourModal('${safeText(f.id)}')">✏️</button>
+        <button class="tbl-btn danger" onclick="deleteFlavour('${safeText(f.id)}')">🗑</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function openFlavourModal(editId) {
+  const modal = document.getElementById('flavourModal');
+  if (!modal) return;
+  document.getElementById('flavourEditId').value = editId || '';
+  document.getElementById('flavourModalTitle').textContent = editId ? 'Edit Flavour' : 'Add Flavour';
+
+  if (editId) {
+    const flavours = typeof FLAVORS !== 'undefined' ? FLAVORS : [];
+    const f = flavours.find(x => x.id === editId);
+    if (f) {
+      document.getElementById('flavourEmoji').value = f.emoji || '';
+      document.getElementById('flavourName').value = f.name ? (f.name.en || f.name) : '';
+    }
+  } else {
+    document.getElementById('flavourEmoji').value = '';
+    document.getElementById('flavourName').value = '';
+  }
+  modal.classList.add('open');
+  modal.setAttribute('aria-hidden', 'false');
+}
+
+function closeFlavourModal() {
+  const modal = document.getElementById('flavourModal');
+  if (modal) { modal.classList.remove('open'); modal.setAttribute('aria-hidden', 'true'); }
+}
+
+async function saveFlavour(e) {
+  e.preventDefault();
+  const editId  = document.getElementById('flavourEditId').value;
+  const emoji   = document.getElementById('flavourEmoji').value.trim() || '🍧';
+  const nameEn  = document.getElementById('flavourName').value.trim();
+  if (!nameEn) { admToast('Name is required', '#DC2626'); return; }
+
+  const id = editId || makeProductId(nameEn);
+  const payload = { id, name: { en: nameEn, gu: nameEn }, emoji, color: '#2563EB', colorLight: '#DBEAFE' };
+
+  if (typeof FLAVORS !== 'undefined') {
+    const idx = FLAVORS.findIndex(f => f.id === id);
+    if (idx >= 0) FLAVORS[idx] = Object.assign({}, FLAVORS[idx], payload);
+    else FLAVORS.push(payload);
+  }
+
+  try {
+    if (typeof DB !== 'undefined' && typeof DB.pushProduct === 'function') {
+      if (editId && window.allProducts) {
+        const existing = window.allProducts.find(p => p.id === editId);
+        if (existing && existing.dbId) { await DB.updateProduct(existing.dbId, payload); }
+        else await DB.pushProduct(payload);
+      } else { await DB.pushProduct(payload); }
+    }
+  } catch(err) { console.warn(err); }
+
+  admToast('✅ Flavour saved!');
+  closeFlavourModal();
+  renderFlavoursTable();
+}
+
+async function deleteFlavour(id) {
+  if (!confirm('Delete this flavour?')) return;
+  if (typeof FLAVORS !== 'undefined') {
+    const idx = FLAVORS.findIndex(f => f.id === id);
+    if (idx >= 0) FLAVORS.splice(idx, 1);
+  }
+  try {
+    if (window.allProducts) {
+      const p = window.allProducts.find(x => x.id === id);
+      if (p && p.dbId && typeof DB.deleteProduct === 'function') await DB.deleteProduct(p.dbId);
+    }
+  } catch(err) {}
+  admToast('🗑 Flavour deleted');
+  renderFlavoursTable();
+}
+
+// ─── SPECIALS TABLE ───────────────────────
+function renderSpecialsTable() {
+  const tbody = document.getElementById('specialsTableBody');
+  if (!tbody) return;
+
+  const specials = typeof SPECIALS !== 'undefined' ? SPECIALS : [];
+
+  if (specials.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:2rem;color:#aaa;">No specials found. Click + Add Special.</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = specials.map(function(s) {
+    const name = s.name ? (s.name.en || s.name) : s.id;
+    const desc = s.desc ? (s.desc.en || s.desc) : '';
+    const imgHtml = s.img
+      ? `<img src="${s.img}" style="width:48px;height:48px;object-fit:cover;border-radius:8px;" onerror="this.style.display='none'">`
+      : `<span style="font-size:1.8rem;">${s.emoji || '🍧'}</span>`;
+    return `<tr>
+      <td style="text-align:center;">${imgHtml}</td>
+      <td style="font-weight:700;">${safeText(name)}</td>
+      <td style="color:#666;font-size:0.88rem;">${safeText(desc)}</td>
+      <td style="text-align:center; font-weight:800; color:#1E40AF; font-size:1.1rem;">₹${s.price}</td>
+      <td style="text-align:center;">
+        <button class="tbl-btn" style="background:#EFF6FF;color:#1E40AF;margin-right:4px;" onclick="openSpecialModal('${safeText(s.id)}')">✏️</button>
+        <button class="tbl-btn danger" onclick="deleteSpecial('${safeText(s.id)}')">🗑</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function openSpecialModal(editId) {
+  const modal = document.getElementById('specialModal');
+  if (!modal) return;
+  document.getElementById('specialEditId').value = editId || '';
+  document.getElementById('specialModalTitle').textContent = editId ? 'Edit Dr. Special' : 'Add Dr. Special';
+
+  if (editId) {
+    const specials = typeof SPECIALS !== 'undefined' ? SPECIALS : [];
+    const s = specials.find(x => x.id === editId);
+    if (s) {
+      document.getElementById('specialEmoji').value = s.emoji || '';
+      document.getElementById('specialName').value  = s.name ? (s.name.en || s.name) : '';
+      document.getElementById('specialPrice').value = s.price || '';
+      document.getElementById('specialDesc').value  = s.desc ? (s.desc.en || s.desc) : '';
+    }
+  } else {
+    ['specialEmoji','specialName','specialPrice','specialDesc'].forEach(function(id) {
+      const el = document.getElementById(id); if (el) el.value = '';
+    });
+  }
+  modal.classList.add('open');
+  modal.setAttribute('aria-hidden', 'false');
+}
+
+function closeSpecialModal() {
+  const modal = document.getElementById('specialModal');
+  if (modal) { modal.classList.remove('open'); modal.setAttribute('aria-hidden', 'true'); }
+}
+
+async function saveSpecial(e) {
+  e.preventDefault();
+  const editId  = document.getElementById('specialEditId').value;
+  const emoji   = document.getElementById('specialEmoji').value.trim() || '🍧';
+  const nameEn  = document.getElementById('specialName').value.trim();
+  const price   = parseInt(document.getElementById('specialPrice').value, 10);
+  const descEn  = document.getElementById('specialDesc').value.trim();
+  if (!nameEn || !price) { admToast('Name and Price are required', '#DC2626'); return; }
+
+  const id = editId || makeProductId(nameEn);
+  const payload = { id, name: { en: nameEn, gu: nameEn }, emoji, price, isSpecial: true,
+    desc: { en: descEn, gu: descEn }, color: '#1E40AF' };
+
+  if (typeof SPECIALS !== 'undefined') {
+    const idx = SPECIALS.findIndex(s => s.id === id);
+    if (idx >= 0) SPECIALS[idx] = Object.assign({}, SPECIALS[idx], payload);
+    else SPECIALS.push(payload);
+  }
+
+  try {
+    if (typeof DB !== 'undefined' && typeof DB.pushProduct === 'function') {
+      if (editId && window.allProducts) {
+        const existing = window.allProducts.find(p => p.id === editId);
+        if (existing && existing.dbId) await DB.updateProduct(existing.dbId, payload);
+        else await DB.pushProduct(payload);
+      } else await DB.pushProduct(payload);
+    }
+  } catch(err) { console.warn(err); }
+
+  admToast('✅ Special saved!');
+  closeSpecialModal();
+  renderSpecialsTable();
+}
+
+async function deleteSpecial(id) {
+  if (!confirm('Delete this special?')) return;
+  if (typeof SPECIALS !== 'undefined') {
+    const idx = SPECIALS.findIndex(s => s.id === id);
+    if (idx >= 0) SPECIALS.splice(idx, 1);
+  }
+  try {
+    if (window.allProducts) {
+      const p = window.allProducts.find(x => x.id === id);
+      if (p && p.dbId && typeof DB.deleteProduct === 'function') await DB.deleteProduct(p.dbId);
+    }
+  } catch(err) {}
+  admToast('🗑 Special deleted');
+  renderSpecialsTable();
+}
+
+// ─── CATEGORIES TABLE ─────────────────────
+function renderCategoriesTable() {
+  const tbody = document.getElementById('categoriesTableBody');
+  if (!tbody) return;
+
+  const cats = typeof CATEGORIES !== 'undefined' ? CATEGORIES : [];
+
+  if (cats.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:2rem;color:#aaa;">No categories found.</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = cats.map(function(c) {
+    const name = c.name ? (c.name.en || c.name) : c.id;
+    const desc = c.desc ? (c.desc.en || c.desc) : '';
+    return `<tr>
+      <td style="text-align:center; font-size:1.4rem;">${c.emoji || '📐'}</td>
+      <td style="font-weight:700;">${safeText(name)}</td>
+      <td style="color:#666;font-size:0.88rem;">${safeText(desc)}</td>
+      <td style="text-align:center; font-weight:800; color:#1E40AF; font-size:1.1rem;">₹${c.price}</td>
+      <td style="text-align:center;">
+        <button class="tbl-btn" style="background:#EFF6FF;color:#1E40AF;margin-right:4px;" onclick="openCategoryModal('${safeText(c.id)}')">✏️</button>
+        <button class="tbl-btn danger" onclick="deleteCategory('${safeText(c.id)}')">🗑</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function openCategoryModal(editId) {
+  const modal = document.getElementById('categoryModal');
+  if (!modal) return;
+  document.getElementById('categoryEditId').value = editId || '';
+  document.getElementById('categoryModalTitle').textContent = editId ? 'Edit Category' : 'Add Category';
+
+  if (editId) {
+    const cats = typeof CATEGORIES !== 'undefined' ? CATEGORIES : [];
+    const c = cats.find(x => x.id === editId);
+    if (c) {
+      document.getElementById('categoryEmoji').value = c.emoji || '';
+      document.getElementById('categoryName').value  = c.name ? (c.name.en || c.name) : '';
+      document.getElementById('categoryPrice').value = c.price || '';
+      document.getElementById('categoryDesc').value  = c.desc ? (c.desc.en || c.desc) : '';
+    }
+  } else {
+    ['categoryEmoji','categoryName','categoryPrice','categoryDesc'].forEach(function(id) {
+      const el = document.getElementById(id); if (el) el.value = '';
+    });
+  }
+  modal.classList.add('open');
+  modal.setAttribute('aria-hidden', 'false');
+}
+
+function closeCategoryModal() {
+  const modal = document.getElementById('categoryModal');
+  if (modal) { modal.classList.remove('open'); modal.setAttribute('aria-hidden', 'true'); }
+}
+
+async function saveCategory(e) {
+  e.preventDefault();
+  const editId  = document.getElementById('categoryEditId').value;
+  const emoji   = document.getElementById('categoryEmoji').value.trim() || '📐';
+  const nameEn  = document.getElementById('categoryName').value.trim();
+  const price   = parseInt(document.getElementById('categoryPrice').value, 10);
+  const descEn  = document.getElementById('categoryDesc').value.trim();
+  if (!nameEn || !price) { admToast('Name and Price are required', '#DC2626'); return; }
+
+  const id = editId || makeProductId(nameEn);
+  const payload = { id, name: { en: nameEn, gu: nameEn }, emoji, price, isCategory: true,
+    desc: { en: descEn, gu: descEn } };
+
+  if (typeof CATEGORIES !== 'undefined') {
+    const idx = CATEGORIES.findIndex(c => c.id === id);
+    if (idx >= 0) CATEGORIES[idx] = Object.assign({}, CATEGORIES[idx], payload);
+    else CATEGORIES.push(payload);
+  }
+
+  try {
+    if (typeof db !== 'undefined') {
+      await db.ref('customProducts/category/' + id).set(payload);
+    }
+  } catch(err) { console.warn(err); }
+
+  admToast('✅ Category saved!');
+  closeCategoryModal();
+  renderCategoriesTable();
+  renderFlavoursTable(); // refresh prices
+}
+
+async function deleteCategory(id) {
+  if (!confirm('Delete this category?')) return;
+  if (typeof CATEGORIES !== 'undefined') {
+    const idx = CATEGORIES.findIndex(c => c.id === id);
+    if (idx >= 0) CATEGORIES.splice(idx, 1);
+  }
+  admToast('🗑 Category deleted');
+  renderCategoriesTable();
+  renderFlavoursTable();
 }

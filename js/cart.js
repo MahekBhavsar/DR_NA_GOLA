@@ -37,17 +37,16 @@ function renderCart() {
     <div class="cart-item">
       <div class="cart-item-icon" style="background: ${item.isSpecial ? 'var(--primary-50)' : 'var(--bg)'}">${item.emoji}</div>
       <div class="cart-item-info">
-        <div class="cart-item-name" style="font-size: 1.1rem; margin-bottom: 0.3rem;">${tObj(item.name)}</div>
-        <div class="cart-item-details" style="display: flex; flex-direction: column; gap: 0.25rem;">
-          ${item.category ? `<span style="font-weight: 600; color: var(--primary-700);">${tObj(item.category.name)}</span>` : ''}
-          <span>Qty: <strong>${item.qty}</strong></span>
-          ${item.note ? `<span style="font-style: italic; color: var(--text-light); font-size: 0.85rem;">Note: ${item.note}</span>` : ''}
+        <div class="cart-item-name" style="font-size: 1.05rem; margin-bottom: 0.25rem;">${tObj(item.name)}</div>
+        <div class="cart-item-details" style="display: flex; flex-direction: column; gap: 0.2rem;">
+          ${item.category ? `<span style="font-weight: 600; color: var(--primary-700); font-size:0.85rem;">${tObj(item.category.name)} &mdash; ${formatPrice(item.basePrice)}</span>` : ''}
+          <span style="font-size:0.82rem; color:var(--text-light);">Qty: <strong style="color:var(--text);">${item.qty}</strong></span>
+          ${item.note ? `<span style="font-style: italic; color: var(--text-light); font-size: 0.82rem;">Note: ${item.note}</span>` : ''}
         </div>
       </div>
-      <div style="text-align: right; display: flex; flex-direction: column; justify-content: space-between; align-items: flex-end;">
-        <div class="cart-item-price" style="font-size: 1.25rem;">${formatPrice(item.totalPrice * item.qty)}</div>
-        <div class="cart-item-remove" style="margin-top: 1rem; color: var(--danger); font-weight: 600; cursor: pointer;"
-          onclick="removeItem('${item.cartId}')">${t('cart_remove') || 'Remove'}</div>
+      <div style="text-align: right; display: flex; flex-direction: column; justify-content: space-between; align-items: flex-end; gap: 0.5rem;">
+        <div class="cart-item-price">${formatPrice(item.totalPrice * item.qty)}</div>
+        <div class="cart-item-remove" onclick="removeItem('${item.cartId}')">${t('cart_remove') || 'Remove'}</div>
       </div>
     </div>
   `).join('');
@@ -84,20 +83,25 @@ function setPayment(method) {
 
 // ── Update Totals ──────────────────────────────
 function updateTotals() {
+  const cart = getCart();
   const subtotal = getCartTotal();
-  const charge = orderType === 'parcel' ? (typeof PARCEL_CHARGE !== 'undefined' ? PARCEL_CHARGE : 10) : 0;
+  const perItem = typeof PARCEL_CHARGE !== 'undefined' ? PARCEL_CHARGE : 10;
+  const totalQty = cart.reduce((sum, item) => sum + (item.qty || 1), 0);
+  const charge = orderType === 'parcel' ? perItem * totalQty : 0;
   const total = subtotal + charge;
 
-  const subEl      = document.getElementById('sumSubtotal');
-  const totalEl    = document.getElementById('sumTotal');
-  const parcelRow  = document.getElementById('parcelRow');
-  const parcelEl   = document.getElementById('sumParcel');
+  const subEl     = document.getElementById('sumSubtotal');
+  const totalEl   = document.getElementById('sumTotal');
+  const parcelRow = document.getElementById('parcelRow');
+  const parcelEl  = document.getElementById('sumParcel');
+  const parcelLbl = document.getElementById('parcelLabel');
 
   if (subEl)   subEl.textContent   = formatPrice(subtotal);
   if (totalEl) totalEl.textContent = formatPrice(total);
   if (parcelRow) {
     parcelRow.style.display = charge > 0 ? 'flex' : 'none';
     if (parcelEl && charge > 0) parcelEl.textContent = formatPrice(charge);
+    if (parcelLbl && charge > 0) parcelLbl.textContent = `Parcel Charge (${totalQty} item${totalQty > 1 ? 's' : ''} × ₹${perItem})`;
   }
 }
 
@@ -197,10 +201,24 @@ async function handleCheckout(e) {
   btn.disabled = true;
 
   // ── 4. Build order object ──
-  const orderId = 'ORD-' + Date.now().toString().slice(-6) +
-                  Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+  let seqId = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+  try {
+    if (typeof DB !== 'undefined' && DB.getNextOrderId) {
+      const seq = await Promise.race([
+        DB.getNextOrderId(),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 3000))
+      ]);
+      seqId = seq;
+    }
+  } catch (e) {
+    console.warn("Failed to fetch sequence order ID, using random fallback.");
+  }
+  const orderId = '#' + seqId;
+
   const subtotal     = getCartTotal();
-  const parcelCharge = orderType === 'parcel' ? (typeof PARCEL_CHARGE !== 'undefined' ? PARCEL_CHARGE : 10) : 0;
+  const perItem      = typeof PARCEL_CHARGE !== 'undefined' ? PARCEL_CHARGE : 10;
+  const totalQty     = cart.reduce((sum, item) => sum + (item.qty || 1), 0);
+  const parcelCharge = orderType === 'parcel' ? perItem * totalQty : 0;
   const total        = subtotal + parcelCharge;
 
   const orderData = {

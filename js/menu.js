@@ -7,8 +7,8 @@ let searchQuery = '';
 
 // Customization State
 let currentItem = null;
-let selectedCategories = new Set();
-let currentQty = 1;
+let selectedCategories = new Map(); // catId -> qty
+let currentQty = 1; // used only for specials
 
 document.addEventListener('DOMContentLoaded', () => {
   renderNavbar('menu');
@@ -54,7 +54,15 @@ function renderMenu() {
   let items = [];
   
   if (currentFilter === 'special') {
-    items = window.allProducts.filter(p => p.isSpecial).map(p => ({ ...p, type: 'special' }));
+    items = window.allProducts.filter(p => p.isSpecial).map(p => {
+      let sp = { ...p, type: 'special' };
+      // Merge img from static SPECIALS if missing
+      if (!sp.img) {
+        const staticSp = (typeof SPECIALS !== 'undefined' ? SPECIALS : []).find(s => s.id === sp.id);
+        if (staticSp && staticSp.img) sp.img = staticSp.img;
+      }
+      return sp;
+    });
   } else {
     items = window.allProducts.filter(p => !p.isSpecial).map(p => ({ ...p, type: 'flavor' }));
   }
@@ -76,9 +84,14 @@ function renderMenu() {
   
   document.getElementById('noResults').style.display = 'none';
 
-  grid.innerHTML = items.map((item, index) => `
+  grid.innerHTML = items.map((item, index) => {
+    const iconHtml = item.img 
+      ? `<div class="flavor-icon" style="background: transparent; overflow: hidden; padding: 0;"><img src="${item.img}" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.parentElement.innerHTML='${item.emoji}'"></div>`
+      : `<div class="flavor-icon" style="background: ${item.colorLight || '#f0f0f0'}">${item.emoji}</div>`;
+
+    return `
     <div class="flavor-card fade-in" style="transition-delay: ${(index % 10) * 0.05}s" onclick="openCustomizeModal('${item.id}', '${item.type}')">
-      <div class="flavor-icon" style="background: ${item.colorLight || '#f0f0f0'}">${item.emoji}</div>
+      ${iconHtml}
       <div class="flavor-name">${tObj(item.name)}</div>
       ${item.type === 'special' 
         ? `<div class="flavor-name-sub">${tObj(item.desc)}</div>
@@ -87,7 +100,7 @@ function renderMenu() {
       }
       <button class="btn btn-primary btn-sm btn-block" style="margin-top: 0.75rem;">${t('menu_customize')}</button>
     </div>
-  `).join('');
+  `}).join('');
   
   setTimeout(initScrollAnimations, 50);
 }
@@ -114,8 +127,8 @@ function openCustomizeModal(itemId, type) {
   } else {
     const dbFlavor = window.allProducts && window.allProducts.find(p => p.id === itemId && !p.isSpecial);
     currentItem = { ...(dbFlavor || FLAVORS.find(f => f.id === itemId)), isSpecial: false };
-    selectedCategories.clear();
-    selectedCategories.add('super'); // default
+    selectedCategories = new Map(); // reset per-category quantities
+    selectedCategories.set('super', 1); // default: 1 Super
   }
   
   currentQty = 1;
@@ -128,9 +141,11 @@ function openCustomizeModal(itemId, type) {
   const footer = document.querySelector('.modal-footer');
   if (footer) {
     footer.innerHTML = `
-      <div style="width: 100%; display: flex; justify-content: center;">
-        <button class="btn btn-primary btn-block btn-pulse" id="modalBuyBtn" onclick="buyNowAndClose()" style="padding: 1rem; font-size: 1.1rem; width: 100%;">⚡ Buy Now</button>
+      <div class="modal-price-strip">
+        <span class="strip-label">Total</span>
+        <span class="strip-amount" id="modalStripTotal">₹0</span>
       </div>
+      <button class="btn btn-primary btn-block" id="modalBuyBtn" onclick="buyNowAndClose()" style="font-size:1.05rem; padding: 0.9rem;">Buy Now</button>
     `;
   }
 }
@@ -151,16 +166,22 @@ function updateModalUI() {
   // ── Size Selection (regular flavors only) ──
   if (!currentItem.isSpecial) {
     html += `
-      <h4 style="margin-bottom: 0.75rem; color: var(--text);">${t('menu_select_size')} <small style="font-weight:400; color:var(--text-light);">(select multiple)</small></h4>
+      <h4 style="margin-bottom: 0.85rem; color: var(--text); font-size:0.95rem;">Select Size &amp; Quantity</h4>
       <div class="category-options">
         ${CATEGORIES.map(cat => {
-          const isSelected = selectedCategories.has(cat.id);
+          const qty = selectedCategories.get(cat.id) || 0;
+          const isSelected = qty > 0;
           return `
-          <div class="category-option ${isSelected ? 'selected' : ''}" onclick="toggleCategory('${cat.id}')">
-            <div class="cat-check">${isSelected ? '✅' : ''}</div>
-            <span class="cat-emoji">${cat.emoji}</span>
-            <div class="cat-name">${tObj(cat.name)}</div>
-            <div class="cat-price">${formatPrice(cat.price)}</div>
+          <div class="category-option ${isSelected ? 'selected' : ''}">
+            <div class="cat-info">
+              <div class="cat-name">${tObj(cat.name)}</div>
+              <div class="cat-price">${formatPrice(cat.price)}</div>
+            </div>
+            <div class="cat-qty-control">
+              <button class="cat-qty-btn" onclick="changeCatQty('${cat.id}', -1)">−</button>
+              <span class="cat-qty-val">${qty}</span>
+              <button class="cat-qty-btn" onclick="changeCatQty('${cat.id}', 1)">+</button>
+            </div>
           </div>`;
         }).join('')}
       </div>
@@ -168,31 +189,30 @@ function updateModalUI() {
   } else {
     // Special info
     html += `
-      <div style="padding: 1rem; background: linear-gradient(135deg, #fff7d6, #fdfbf7); border: 1px solid rgba(212,175,55,0.3); border-radius: var(--radius-md); margin-bottom: 1rem;">
-        <div style="font-weight: 700; color: #2b113b; margin-bottom: 0.3rem;">⭐ Dr. Special</div>
+      <div style="padding: 1rem; background: linear-gradient(135deg, var(--primary-50), #EBF5FF); border: 1px solid var(--primary-100); border-radius: var(--radius-md); margin-bottom: 1rem;">
+        <div style="font-weight: 700; color: var(--primary-900); margin-bottom: 0.3rem;">⭐ Dr. Special</div>
         <div style="color: var(--text-body); font-size: 0.9rem;">${tObj(currentItem.desc)}</div>
-        <div style="font-weight: 800; color: var(--accent); font-size: 1.3rem; margin-top: 0.5rem;">${formatPrice(currentItem.price)}</div>
+        <div style="font-weight: 800; color: var(--primary-700); font-size: 1.3rem; margin-top: 0.5rem;">${formatPrice(currentItem.price)}</div>
+      </div>
+    `;
+    // Qty for specials
+    html += `
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <h4 style="color: var(--text); font-size:0.95rem;">${t('menu_qty')}</h4>
+        <div class="qty-selector">
+          <button class="qty-btn" onclick="updateQty(-1)">−</button>
+          <input type="text" class="qty-value" value="${currentQty}" readonly>
+          <button class="qty-btn" onclick="updateQty(1)">+</button>
+        </div>
       </div>
     `;
   }
 
   // ── Custom note ──
   html += `
-    <div class="form-group" style="margin-top: 1rem;">
+    <div class="form-group" style="margin-top: 0.75rem;">
       <label style="font-size: 0.85rem; color: var(--text-light);">📝 Special instructions (optional)</label>
-      <input type="text" id="manualNote" class="form-input" placeholder="e.g. extra sweet, less ice, more syrup..." style="font-size: 0.85rem; margin-top: 0.4rem;">
-    </div>
-  `;
-
-  // ── Quantity ──
-  html += `
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1rem;">
-      <h4 style="color: var(--text);">${t('menu_qty')}</h4>
-      <div class="qty-selector">
-        <button class="qty-btn" onclick="updateQty(-1)">−</button>
-        <input type="text" class="qty-value" value="${currentQty}" readonly>
-        <button class="qty-btn" onclick="updateQty(1)">+</button>
-      </div>
+      <input type="text" id="manualNote" class="form-input" placeholder="e.g. extra sweet, less ice..." style="font-size: 0.85rem; margin-top: 0.4rem;">
     </div>
   `;
 
@@ -200,13 +220,20 @@ function updateModalUI() {
   updatePriceSummary();
 }
 
-function toggleCategory(catId) {
-  if (selectedCategories.has(catId)) {
+function changeCatQty(catId, delta) {
+  const current = selectedCategories.get(catId) || 0;
+  const newQty = current + delta;
+  if (newQty <= 0) {
     selectedCategories.delete(catId);
-  } else {
-    selectedCategories.add(catId);
+  } else if (newQty <= 20) {
+    selectedCategories.set(catId, newQty);
   }
   updateModalUI();
+}
+
+function toggleCategory(catId) {
+  // Legacy alias — not used for regular items any more, but kept for safety
+  changeCatQty(catId, selectedCategories.has(catId) ? -selectedCategories.get(catId) : 1);
 }
 
 function updateQty(change) {
@@ -220,37 +247,36 @@ function updateQty(change) {
 function updatePriceSummary() {
   if (!currentItem) return;
   
-  let basePrice = 0;
+  let grandTotal = 0;
   
   if (currentItem.isSpecial) {
-    basePrice = currentItem.price;
+    grandTotal = currentItem.price * currentQty;
   } else {
-    selectedCategories.forEach(catId => {
+    selectedCategories.forEach((qty, catId) => {
       const c = CATEGORIES.find(x => x.id === catId);
-      if (c) basePrice += c.price;
+      if (c && qty > 0) grandTotal += c.price * qty;
     });
   }
   
-  const grandTotal = basePrice * currentQty;
+  // Update the price strip in footer
+  const strip = document.getElementById('modalStripTotal');
+  if (strip) strip.textContent = formatPrice(grandTotal);
   
-  document.getElementById('summaryBasePrice').textContent = formatPrice(basePrice);
-  document.getElementById('summaryToppingsPrice').textContent = '₹0';
-  document.getElementById('summaryTotal').textContent = formatPrice(grandTotal);
-  
-  // Disable add button if nothing selected
+  // Update buy button
   const buyBtn = document.getElementById('modalBuyBtn');
-  const disabled = (!currentItem.isSpecial && selectedCategories.size === 0);
+  const hasSelection = currentItem.isSpecial ? true : selectedCategories.size > 0;
   
   if (buyBtn) {
-    buyBtn.disabled = disabled;
-    buyBtn.style.opacity = disabled ? '0.5' : '1';
-    // Update button text to include price
-    if (!disabled) {
-      buyBtn.innerHTML = `⚡ Buy Now - ${formatPrice(grandTotal)}`;
-    } else {
-      buyBtn.innerHTML = `⚡ Buy Now`;
-    }
+    buyBtn.disabled = !hasSelection;
+    buyBtn.style.opacity = !hasSelection ? '0.5' : '1';
+    buyBtn.textContent = grandTotal > 0 ? `Buy Now — ${formatPrice(grandTotal)}` : 'Buy Now';
   }
+  
+  // Legacy elements (still in HTML before footer replacement)
+  const bpEl = document.getElementById('summaryBasePrice');
+  const totEl = document.getElementById('summaryTotal');
+  if (bpEl) bpEl.textContent = formatPrice(grandTotal);
+  if (totEl) totEl.textContent = formatPrice(grandTotal);
 }
 
 function addToCartAndClose() {
@@ -275,11 +301,11 @@ function addToCartAndClose() {
       totalPrice: currentItem.price
     });
   } else {
-    // One cart item per selected size
-    selectedCategories.forEach(catId => {
+    // One cart item per selected category, with its own qty from the Map
+    if (selectedCategories.size === 0) return;
+    selectedCategories.forEach((qty, catId) => {
       const cat = CATEGORIES.find(c => c.id === catId);
-      if (!cat) return;
-      
+      if (!cat || qty === 0) return;
       addToCart({
         id: currentItem.id + '-' + cat.id + '-' + Date.now(),
         name: currentItem.name,
@@ -288,7 +314,7 @@ function addToCartAndClose() {
         category: cat,
         toppings: [],
         note: note,
-        qty: currentQty,
+        qty: qty,
         basePrice: cat.price,
         toppingsPrice: 0,
         unitPrice: cat.price,
