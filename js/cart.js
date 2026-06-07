@@ -40,18 +40,39 @@ function renderCart() {
         <div class="cart-item-name" style="font-size: 1.05rem; margin-bottom: 0.25rem;">${tObj(item.name)}</div>
         <div class="cart-item-details" style="display: flex; flex-direction: column; gap: 0.2rem;">
           ${item.category ? `<span style="font-weight: 600; color: var(--primary-700); font-size:0.85rem;">${tObj(item.category.name)} &mdash; ${formatPrice(item.basePrice)}</span>` : ''}
-          <span style="font-size:0.82rem; color:var(--text-light);">Qty: <strong style="color:var(--text);">${item.qty}</strong></span>
-          ${item.note ? `<span style="font-style: italic; color: var(--text-light); font-size: 0.82rem;">Note: ${item.note}</span>` : ''}
+          <div style="display:flex; align-items:center; gap:0.5rem; margin-top:0.25rem;">
+            <span style="font-size:0.82rem; color:var(--text-light);">Qty:</span>
+            <div style="display:flex; align-items:center; background:var(--white); border-radius:6px; overflow:hidden; border:1px solid rgba(0,0,0,0.1);">
+              <button onclick="updateItemQty('${item.cartId}', -1)" style="border:none; background:transparent; padding:0.15rem 0.5rem; font-weight:bold; color:var(--primary-700); cursor:pointer; font-size:1.1rem;">-</button>
+              <span style="padding:0 0.5rem; font-weight:600; font-size:0.9rem; min-width:1rem; text-align:center;">${item.qty}</span>
+              <button onclick="updateItemQty('${item.cartId}', 1)" style="border:none; background:transparent; padding:0.15rem 0.5rem; font-weight:bold; color:var(--primary-700); cursor:pointer; font-size:1.1rem;">+</button>
+            </div>
+          </div>
+          ${item.note ? `<span style="font-style: italic; color: var(--text-light); font-size: 0.82rem; margin-top:0.25rem;">Note: ${item.note}</span>` : ''}
         </div>
       </div>
       <div style="text-align: right; display: flex; flex-direction: column; justify-content: space-between; align-items: flex-end; gap: 0.5rem;">
         <div class="cart-item-price">${formatPrice(item.totalPrice * item.qty)}</div>
-        <div class="cart-item-remove" onclick="removeItem('${item.cartId}')">${t('cart_remove') || 'Remove'}</div>
+        <div class="cart-item-remove" onclick="removeItem('${item.cartId}')" style="cursor:pointer; color:var(--error); font-size:0.85rem; padding:0.2rem; background:rgba(220,38,38,0.1); border-radius:4px;">${t('cart_remove') || 'Remove'}</div>
       </div>
     </div>
   `).join('');
 
   updateTotals();
+}
+
+function updateItemQty(cartId, change) {
+  const cart = getCart();
+  const idx = cart.findIndex(c => String(c.cartId) === String(cartId));
+  if (idx > -1) {
+    cart[idx].qty += change;
+    if (cart[idx].qty <= 0) {
+      cart.splice(idx, 1);
+    }
+    saveCart(cart);
+    renderCart();
+    if (typeof updateCartBadge === 'function') updateCartBadge();
+  }
 }
 
 function removeItem(cartId) {

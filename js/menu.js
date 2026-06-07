@@ -86,7 +86,7 @@ function renderMenu() {
 
   grid.innerHTML = items.map((item, index) => {
     const iconHtml = item.img 
-      ? `<div class="flavor-icon" style="background: transparent; overflow: hidden; padding: 0;"><img src="${item.img}" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.parentElement.innerHTML='${item.emoji}'"></div>`
+      ? `<div class="flavor-icon" style="background: transparent; overflow: hidden; padding: 0;"><img src="${item.img}" style="width: 100%; height: 100%; object-fit: contain;" onerror="this.parentElement.innerHTML='${item.emoji}'"></div>`
       : `<div class="flavor-icon" style="background: ${item.colorLight || '#f0f0f0'}">${item.emoji}</div>`;
 
     return `

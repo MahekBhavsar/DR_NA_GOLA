@@ -91,7 +91,7 @@ function renderSpecials() {
 
     // Use real image if available, else fall back to emoji
     const imgHtml = sp.img
-      ? `<div class="special-card-img-wrap"><img src="${sp.img}" alt="${tObj(sp.name)}" class="special-card-img" onerror="this.parentElement.innerHTML='<span class=\\'emoji\\'>${sp.emoji || '🍧'}</span>'"></div>`
+      ? `<div class="special-card-img-wrap" style="width:100%; aspect-ratio: 1/1; display:flex; align-items:center; justify-content:center; margin-bottom: 0.5rem;"><img src="${sp.img}" alt="${tObj(sp.name)}" class="special-card-img" style="max-width:100%; max-height:100%; object-fit:contain; border-radius: 8px;" onerror="this.parentElement.innerHTML='<span class=\\'emoji\\' style=\\'font-size:3.5rem;\\'>${sp.emoji || '🍧'}</span>'"></div>`
       : `<span class="emoji" style="font-size:3.5rem; display:block; margin: 0.5rem 0;">${sp.emoji || '🍧'}</span>`;
 
     return `

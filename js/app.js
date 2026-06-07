@@ -24,7 +24,8 @@ function addToCart(item) {
 
 function removeFromCart(cartId) {
   let cart = getCart();
-  cart = cart.filter(i => i.cartId !== cartId);
+  // Use String conversion to handle number vs string cartId mismatch
+  cart = cart.filter(i => String(i.cartId) !== String(cartId));
   saveCart(cart);
 }
 
