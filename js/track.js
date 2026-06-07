@@ -5,7 +5,7 @@
 document.addEventListener('DOMContentLoaded', () => {
   renderNavbar('track');
   renderFooter();
-  
+
   // If URL has orderId, search automatically
   const urlParams = new URLSearchParams(window.location.search);
   const oid = urlParams.get('id');
@@ -25,7 +25,7 @@ function searchOrder() {
 
   const resultDiv = document.getElementById('trackResult');
   const loader = document.getElementById('trackLoader');
-  
+
   resultDiv.style.display = 'none';
   loader.style.display = 'block';
 
@@ -40,8 +40,8 @@ function searchOrder() {
       });
 
       // Filter by phone or orderId (case-insensitive)
-      const matched = orders.filter(o => 
-        o.orderId.toLowerCase() === query.toLowerCase() || 
+      const matched = orders.filter(o =>
+        o.orderId.toLowerCase() === query.toLowerCase() ||
         o.phone === query
       );
 
@@ -55,11 +55,11 @@ function searchOrder() {
         `;
       } else {
         // Sort newest first
-        matched.sort((a,b) => b.timestamp - a.timestamp);
-        
+        matched.sort((a, b) => b.timestamp - a.timestamp);
+
         resultDiv.innerHTML = matched.map(o => renderOrderCard(o)).join('');
       }
-      
+
       resultDiv.style.display = 'block';
     })
     .catch(err => {
@@ -75,7 +75,7 @@ function renderOrderCard(order) {
   let statusColor = "var(--warning)";
   let progress = 25;
   let statusIcon = "🕒";
-  
+
   if (order.status === 'processing') {
     statusText = "Processing";
     statusColor = "var(--info)";
@@ -84,13 +84,18 @@ function renderOrderCard(order) {
   } else if (order.status === 'ready') {
     statusText = "Ready for Pickup";
     statusColor = "#2E7D32";
-    progress = 100;
+    progress = 75;
     statusIcon = "✅";
   } else if (order.status === 'completed') {
     statusText = "Completed";
     statusColor = "var(--success)";
-    progress = 100;
+    progress = 90;
     statusIcon = "🎉";
+  } else if (order.status === 'paid') {
+    statusText = "Payment Done";
+    statusColor = "#7C3AED";
+    progress = 100;
+    statusIcon = "💜";
   }
 
   const itemsList = order.items.map(i => `
@@ -104,7 +109,7 @@ function renderOrderCard(order) {
     <div style="background: var(--white); border-radius: var(--radius-lg); padding: 1.5rem; box-shadow: var(--shadow-sm); margin-bottom: 1.5rem; border-top: 4px solid ${statusColor};">
       <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem;">
         <div>
-          <h3 style="margin-bottom: 0.2rem;">Order #${order.orderId}</h3>
+          <h3 style="margin-bottom: 0.2rem;">Order #${String(order.orderId).replace('#', '')}</h3>
           <div style="color: var(--text-light); font-size: 0.85rem;">${new Date(order.timestamp).toLocaleString()}</div>
         </div>
         <div style="text-align: right;">
