@@ -51,7 +51,7 @@ const PARCEL_CHARGE = 10;
 const T = {
   // Brand
   brand_name: { en: 'Dr Na Gola', gu: 'ડૉક્ટરના ગોળા' },
-  brand_tagline: { en: 'Ghar ni Dhoraji na Ghar jeva Gola', gu: 'ઘરની ધોરાજીના ઘર જેવા ગોળા' },
+  brand_tagline: { en: 'ઘરની ધોરાજીના ઘર જેવા ગોળા', gu: 'ઘરની ધોરાજીના ઘર જેવા ગોળા' },
   brand_address: { en: 'Tithal Road, Opp. Sardar Heights, Valsad', gu: 'તીથલ રોડ, સરદાર હાઇટ્સ સામે, વલસાડ' },
   brand_owner: { en: 'Mohit Vachhani', gu: 'મોહિત વછ્છાણી' },
   brand_phone: { en: '97122 11599', gu: '૯૭૧૨૨ ૧૧૫૯૯' },
