@@ -176,7 +176,7 @@ const T = {
 
   // Footer
   footer_rights: { en: '© 2026 Dr Na Gola. All rights reserved.', gu: '© 2026 ડૉક્ટરના ગોળા. સર્વાધિકાર સુરક્ષિત.' },
-  footer_made: { en: 'Made with ❤️ in Valsad', gu: 'વલસાડમાં ❤️ થી બનાવેલ' },
+  footer_made: { en: 'Created by Vizoary Innovation', gu: 'વિઝોરી ઈનોવેશન દ્વારા બનાવેલ છે.' },
 
   // Common
   common_close: { en: 'Close', gu: 'બંધ' },
