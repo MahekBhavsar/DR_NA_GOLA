@@ -11,24 +11,6 @@ const HOME_STATIC_REVIEWS = [
     commentEn: 'Perfect premium gola. The syrup tastes rich, the ice is soft, and the dry fruit special is worth it.',
     timestamp: Date.now() - 86400000 * 2,
     isDefault: true
-  },
-  {
-    name: 'Sneha Patel',
-    nameEn: 'Sneha Patel',
-    rating: 5,
-    comment: 'Very clean service and fresh taste. My family loved the Rajbhog and Kaju Gulkand.',
-    commentEn: 'Very clean service and fresh taste. My family loved the Rajbhog and Kaju Gulkand.',
-    timestamp: Date.now() - 86400000 * 4,
-    isDefault: true
-  },
-  {
-    name: 'Amit Shah',
-    nameEn: 'Amit Shah',
-    rating: 5,
-    comment: 'Best gola place in Valsad. The flavour balance is classic and the presentation feels premium.',
-    commentEn: 'Best gola place in Valsad. The flavour balance is classic and the presentation feels premium.',
-    timestamp: Date.now() - 86400000 * 7,
-    isDefault: true
   }
 ];
 
@@ -84,7 +66,7 @@ function renderSpecials() {
     const isTop1 = index === 0;
     const badgeText = isTop1 ? '🏆 Best Seller' : `Top ${index + 1}`;
     const extraClass = isTop1 ? 'top-selling-badge' : '';
-    
+
     // Check if item is already in cart
     const cartItem = typeof cart !== 'undefined' ? cart.find(c => c.id === sp.id) : null;
     const qtyInCart = cartItem ? cartItem.qty : 0;
@@ -124,7 +106,7 @@ function renderSpecials() {
 
 function quickAddSpecial(id, buyNow) {
   const existingItemIndex = typeof cart !== 'undefined' ? cart.findIndex(c => c.id === id) : -1;
-  
+
   if (existingItemIndex > -1) {
     cart[existingItemIndex].qty += 1;
     cart[existingItemIndex].totalPrice = cart[existingItemIndex].qty * cart[existingItemIndex].unitPrice;
@@ -153,7 +135,7 @@ function quickAddSpecial(id, buyNow) {
 
     if (typeof addToCart === 'function') addToCart(cartItem);
   }
-  
+
   renderSpecials();
   if (buyNow) window.location.href = 'cart.html';
 }

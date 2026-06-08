@@ -11,6 +11,7 @@
   <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-storage-compat.js"></script>
 
   <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -341,11 +342,24 @@
 
       <!-- Dashboard Tab -->
       <div id="tab-dashboard" class="admin-tab active">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;flex-wrap:wrap;gap:.75rem;">
           <h2 style="color:var(--text-dark);">Overview</h2>
-          <button class="btn btn-primary btn-sm" onclick="generateSalesReport()">
-            <span style="margin-right:.3rem;font-size:1.1rem;">📊</span> Sales Report PDF
-          </button>
+          <div style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;">
+            <label for="reportPeriod" style="font-size:.85rem;font-weight:600;color:var(--adm-muted);white-space:nowrap;">Report Period:</label>
+            <select id="reportPeriod"
+              style="padding:.45rem .85rem;border:1.5px solid var(--adm-border);border-radius:8px;font-size:.88rem;font-weight:600;color:var(--primary-800);background:var(--white);cursor:pointer;outline:none;">
+              <option value="1">📅 Last 1 Day</option>
+              <option value="7" selected>📅 Last 7 Days</option>
+              <option value="30">📅 Last 30 Days</option>
+              <option value="90">📅 Last 90 Days</option>
+              <option value="0">📅 All Time</option>
+            </select>
+            <button class="btn btn-primary btn-sm"
+              onclick="generateSalesReport(document.getElementById('reportPeriod').value)"
+              style="white-space:nowrap;">
+              <span style="margin-right:.3rem;font-size:1.1rem;">📊</span> Download PDF
+            </button>
+          </div>
         </div>
 
         <!-- KPI Stats -->

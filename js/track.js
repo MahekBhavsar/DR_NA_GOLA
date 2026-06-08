@@ -39,11 +39,14 @@ function searchOrder() {
         orders.push(child.val());
       });
 
-      // Filter by phone or orderId (case-insensitive)
-      const matched = orders.filter(o =>
-        o.orderId.toLowerCase() === query.toLowerCase() ||
-        o.phone === query
-      );
+      // Normalise query: strip leading # so "1" and "#1" both match order "#1"
+      const normalQuery = query.replace(/^#+/, '').toLowerCase();
+
+      // Filter by phone or orderId (with or without # prefix)
+      const matched = orders.filter(o => {
+        const normId = String(o.orderId).replace(/^#+/, '').toLowerCase();
+        return normId === normalQuery || o.phone === query;
+      });
 
       if (matched.length === 0) {
         resultDiv.innerHTML = `
@@ -109,12 +112,14 @@ function renderOrderCard(order) {
     <div style="background: var(--white); border-radius: var(--radius-lg); padding: 1.5rem; box-shadow: var(--shadow-sm); margin-bottom: 1.5rem; border-top: 4px solid ${statusColor};">
       <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem;">
         <div>
-          <h3 style="margin-bottom: 0.2rem;">Order #${String(order.orderId).replace('#', '')}</h3>
+          <h3 style="margin-bottom: 0.2rem;">Order #${String(order.orderId).replace(/^#+/, '')}</h3>
+          ${order.customerName ? `<div style="font-weight: 600; font-size: 0.95rem; color: var(--primary-800); margin-bottom: 0.15rem;">👤 ${order.customerName}</div>` : ''}
           <div style="color: var(--text-light); font-size: 0.85rem;">${new Date(order.timestamp).toLocaleString()}</div>
         </div>
         <div style="text-align: right;">
           <div style="font-weight: 800; font-size: 1.2rem; color: var(--accent);">${formatPrice(order.total)}</div>
-          <div style="font-size: 0.8rem; color: var(--text-light);">${order.paymentMethod.toUpperCase()}</div>
+          <div style="font-size: 0.8rem; color: var(--text-light); margin-bottom: 0.3rem;">${order.paymentMethod ? order.paymentMethod.toUpperCase() : ''}</div>
+          ${order.orderType ? `<div style="display:inline-block; font-size: 0.75rem; font-weight: 700; padding: 0.2rem 0.6rem; border-radius: 20px; background: ${order.orderType === 'parcel' ? '#FFF3E0' : '#E8F5E9'}; color: ${order.orderType === 'parcel' ? '#E65100' : '#2E7D32'}; border: 1px solid ${order.orderType === 'parcel' ? '#FFCC80' : '#A5D6A7'};">${order.orderType === 'parcel' ? '📦 Parcel' : '🏪 Pickup'}</div>` : ''}
         </div>
       </div>
       

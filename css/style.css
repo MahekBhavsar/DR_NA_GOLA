@@ -118,6 +118,7 @@ h4 { font-size: 1.25rem; }
   margin-bottom: 0.5rem;
   background: var(--gradient);
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
   line-height: 1.1;
 }
@@ -131,6 +132,7 @@ h4 { font-size: 1.25rem; }
   letter-spacing: 0.5px;
   background: linear-gradient(135deg, var(--accent), var(--primary-700));
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
   display: inline-block;
 }
@@ -1483,11 +1485,18 @@ textarea.form-input {
   overflow: hidden;
   box-shadow: var(--shadow-md);
   margin-top: 1.5rem;
+  width: 100%;
 }
 .map-embed iframe {
-  width: 100%;
-  height: 250px;
+  width: 100% !important;
+  height: 300px;
   border: none;
+  display: block;
+}
+@media (max-width: 600px) {
+  .map-embed iframe {
+    height: 220px;
+  }
 }
 .whatsapp-btn {
   display: inline-flex;
@@ -1890,6 +1899,19 @@ textarea.form-input {
   .toppings-grid { grid-template-columns: 1fr; }
   .hero h1 { font-size: 2.2rem; }
   .cart-item { flex-wrap: wrap; }
+
+  /* Fix: Buy Now button clipped on narrow mobile cards */
+  .special-card-btns {
+    gap: 0.35rem;
+  }
+  .special-card-btns .btn {
+    padding: 0.4rem 0.5rem !important;
+    font-size: 0.72rem !important;
+    white-space: nowrap;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
 }
 
 /* ── Scrollbar ── */

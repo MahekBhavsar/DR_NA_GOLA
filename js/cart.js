@@ -202,8 +202,13 @@ async function handleCheckout(e) {
   const phoneEl = document.getElementById('custPhone');
 
   if (!nameEl || !nameEl.value.trim()) {
-    cartToast('Please enter your name.', 'error');
+    cartToast('Please enter your full name.', 'error');
     if (nameEl) nameEl.focus();
+    return;
+  }
+  if (nameEl.value.trim().split(/\s+/).length < 2) {
+    cartToast('Please enter your full name (First & Last).', 'error');
+    nameEl.focus();
     return;
   }
 

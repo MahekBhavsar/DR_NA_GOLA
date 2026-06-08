@@ -36,11 +36,11 @@ const CATEGORIES = [
 
 // Top 5 Dr. Specials (₹250 each)
 const SPECIALS = [
-  { id: 'sp-double-dryfruit',   name: { en: 'Double Dryfruit',   gu: 'ડબલ ડ્રાઈફ્રૂટ' },   price: 250, emoji: '🥜', img: 'assets/RoastedDryfruits.png', color: '#8D6E63', desc: { en: 'Loaded with double dryfruit toppings', gu: 'ડબલ ડ્રાઈફ્રૂટ ટોપિંગ સાથે' } },
-  { id: 'sp-shredded-dryfruit', name: { en: 'Shredded Dryfruit', gu: 'શ્રેડેડ ડ્રાઈફ્રૂટ' }, price: 250, emoji: '🌰', img: 'assets/DrSpecial.png',        color: '#A1887F', desc: { en: 'Fine shredded dryfruit mix',      gu: 'ફાઇન શ્રેડેડ ડ્રાઈફ્રૂટ મિક્સ' } },
-  { id: 'sp-kaju-gulkand',      name: { en: 'Kaju Gulkand',      gu: 'કાજુ ગુલકંદ' },        price: 250, emoji: '🌹', img: 'assets/Kaju-gulkand.png',     color: '#E91E63', desc: { en: 'Premium kaju with rose gulkand', gu: 'પ્રીમિયમ કાજુ ગુલકંદ સાથે' } },
-  { id: 'sp-double-double',     name: { en: 'Double Double',     gu: 'ડબલ ડબલ' },             price: 250, emoji: '✨', img: 'assets/Double-Trouble.png',   color: '#FFD600', desc: { en: 'Double everything – double fun!', gu: 'ડબલ બધું – ડબલ મજા!' } },
-  { id: 'sp-mix-masala',        name: { en: 'Mix Masala',        gu: 'મિક્સ મસાલા' },         price: 250, emoji: '🌶️', img: 'assets/MixMasala.png',        color: '#FF5722', desc: { en: 'Special masala blend topping',  gu: 'સ્પેશિયલ મસાલા બ્લેન્ડ ટોપિંગ' } },
+  { id: 'sp-shredded-dryfruit', name: { en: 'Shredded Dryfruit', gu: 'શ્રેડેડ ડ્રાઈફ્રૂટ' }, price: 250, emoji: '🌰', img: 'assets/DrSpecial.png', color: '#A1887F', desc: { en: 'Fine shredded dryfruit mix', gu: 'ફાઇન શ્રેડેડ ડ્રાઈફ્રૂટ મિક્સ' } },
+  { id: 'sp-double-dryfruit', name: { en: 'Double Dryfruit', gu: 'ડબલ ડ્રાઈફ્રૂટ' }, price: 250, emoji: '🥜', img: 'assets/RoastedDryfruits.png', color: '#8D6E63', desc: { en: 'Loaded with double dryfruit toppings', gu: 'ડબલ ડ્રાઈફ્રૂટ ટોપિંગ સાથે' } },
+  { id: 'sp-kaju-gulkand', name: { en: 'Kaju Gulkand', gu: 'કાજુ ગુલકંદ' }, price: 250, emoji: '🌹', img: 'assets/Kaju-gulkand.png', color: '#E91E63', desc: { en: 'Premium kaju with rose gulkand', gu: 'પ્રીમિયમ કાજુ ગુલકંદ સાથે' } },
+  { id: 'sp-double-double', name: { en: 'Double Double', gu: 'ડબલ ડબલ' }, price: 250, emoji: '✨', img: 'assets/Double-Trouble.png', color: '#FFD600', desc: { en: 'Double everything – double fun!', gu: 'ડબલ બધું – ડબલ મજા!' } },
+  { id: 'sp-mix-masala', name: { en: 'Mix Masala', gu: 'મિક્સ મસાલા' }, price: 250, emoji: '🌶️', img: 'assets/MixMasala.png', color: '#FF5722', desc: { en: 'Special masala blend topping', gu: 'સ્પેશિયલ મસાલા બ્લેન્ડ ટોપિંગ' } },
 ];
 
 const PARCEL_CHARGE = 10;
@@ -234,48 +234,12 @@ function updateAllText() {
 // =============================================
 const DEFAULT_REVIEWS = [
   {
-    name: "Rahul Desai",
-    nameEn: "Rahul Desai",
+    name: "Mohit Vachhani",
+    nameEn: "Mohit Vachhani",
     rating: 5,
     comment: "The absolute best gola in Valsad! The Rajbhog and Double Dryfruit are perfectly sweet, loaded with nuts, and the ice is so soft. A premium experience.",
     commentEn: "The absolute best gola in Valsad! The Rajbhog and Double Dryfruit are perfectly sweet, loaded with nuts, and the ice is so soft. A premium experience.",
     timestamp: Date.now() - 86400000 * 2,
-    isDefault: true
-  },
-  {
-    name: "Sneha Patel",
-    nameEn: "Sneha Patel",
-    rating: 5,
-    comment: "I love that they use Khadi Sakar and 100% Mineral Water. I can safely bring my kids here without worrying about hygiene. Superb taste and quality!",
-    commentEn: "I love that they use Khadi Sakar and 100% Mineral Water. I can safely bring my kids here without worrying about hygiene. Superb taste and quality!",
-    timestamp: Date.now() - 86400000 * 5,
-    isDefault: true
-  },
-  {
-    name: "Amit Shah",
-    nameEn: "Amit Shah",
-    rating: 5,
-    comment: "Authentic Dhoraji style gola right here in Valsad. The Malai and Kaju Gulkand are out of this world. Must visit!",
-    commentEn: "Authentic Dhoraji style gola right here in Valsad. The Malai and Kaju Gulkand are out of this world. Must visit!",
-    timestamp: Date.now() - 86400000 * 12,
-    isDefault: true
-  },
-  {
-    name: "Pooja Mehta",
-    nameEn: "Pooja Mehta",
-    rating: 4,
-    comment: "Very clean and premium packaging for parcel. The Kalakhatta is tangy and perfect. A bit crowded on weekends but totally worth the wait.",
-    commentEn: "Very clean and premium packaging for parcel. The Kalakhatta is tangy and perfect. A bit crowded on weekends but totally worth the wait.",
-    timestamp: Date.now() - 86400000 * 20,
-    isDefault: true
-  },
-  {
-    name: "Karan Varma",
-    nameEn: "Karan Varma",
-    rating: 5,
-    comment: "The 'Doctor Special Collection' is phenomenal. I've never tasted such rich flavors before. Excellent customer service too.",
-    commentEn: "The 'Doctor Special Collection' is phenomenal. I've never tasted such rich flavors before. Excellent customer service too.",
-    timestamp: Date.now() - 86400000 * 30,
     isDefault: true
   }
 ];
