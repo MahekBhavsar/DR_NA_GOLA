@@ -242,36 +242,38 @@ function renderOrders() {
 
       const itemsHTML = (order.items || []).map(i => {
         const name = i.name && i.name.en ? i.name.en : (i.name || 'Item');
+        const catName = i.category && i.category.name ? (i.category.name.en || '') : '';
+        const noteHtml = i.note ? `<tr><td colspan="3" style="padding:0.15rem 0.6rem 0.4rem;border:none;font-size:0.78rem;color:#B45309;font-style:italic;">📝 ${i.note}</td></tr>` : '';
         return `<tr style="border-bottom: 1px dashed #eee;">
-          <td style="padding:0.3rem 0.6rem;font-size:0.88rem;border:none;">${i.emoji || '🍧'} ${name}</td>
+          <td style="padding:0.3rem 0.6rem;font-size:0.88rem;border:none;">${i.emoji || '🍧'} ${name}${catName ? ' <span style="color:#888;font-size:0.78rem;">(' + catName + ')</span>' : ''}</td>
           <td style="padding:0.3rem 0.6rem;font-size:0.88rem;text-align:center;font-weight:700;border:none;">×${i.qty}</td>
           <td style="padding:0.3rem 0.6rem;font-size:0.88rem;text-align:right;color:var(--adm-accent);font-weight:700;border:none;">₹${i.totalPrice}</td>
-        </tr>`;
+        </tr>${noteHtml}`;
       }).join('');
 
       return `
       <tr style="background:${sc.bg};">
-        <td style="border-left:5px solid ${sc.border};">
+        <td data-label="Order ID" style="border-left:5px solid ${sc.border};">
           <div style="font-family:monospace;font-weight:700;color:${sc.text};font-size:0.95rem;">${order.orderId}</div>
           <div style="font-size:0.78rem;color:#888;margin-top:2px;">${time}</div>
         </td>
-        <td>
+        <td data-label="Customer">
           <div style="font-weight:700;font-size:1.05rem;color:#1a1a1a;">${order.customerName}</div>
           <div style="font-size:0.85rem;color:#555;">📞 ${order.phone}</div>
         </td>
-        <td>
+        <td data-label="Type">
           <div style="font-size:0.9rem;font-weight:600;">${typeIcon}</div>
           <div style="font-size:0.8rem;color:#888;">${payIcons[pm] || '💳'} ${pm.toUpperCase()}</div>
         </td>
-        <td>
+        <td data-label="Items & Total">
           <div style="font-size:1.4rem;font-weight:900;color:#1a1a1a;">₹${order.total}</div>
           <div>
-            <table style="margin-top:0.5rem;background:rgba(255,255,255,0.7);border-radius:8px;width:100%;min-width:180px;border-collapse:collapse;">
+            <table style="margin-top:0.5rem;background:rgba(255,255,255,0.7);border-radius:8px;width:100%;border-collapse:collapse;">
               <tbody>${itemsHTML}</tbody>
             </table>
           </div>
         </td>
-        <td>
+        <td data-label="Status">
           <div class="admin-status-actions" role="group" aria-label="Order status" style="display:flex; flex-wrap:wrap; gap:0.25rem;">
             <button class="status-action-btn ${order.status === 'pending' ? 'is-active' : ''}" 
               style="${order.status === 'pending' ? 'background:#F59E0B; color:white; border-color:#F59E0B;' : ''}"
@@ -287,10 +289,10 @@ function renderOrders() {
               onclick="updateOrderStatus('${order.id}', 'paid', this)">Payment Done</button>
           </div>
         </td>
-        <td>
-          <div style="display:flex;gap:0.5rem;flex-direction:column;">
-            <button style="background:#25D366;color:white;border:none;border-radius:8px;padding:0.4rem 0.8rem;cursor:pointer;font-weight:600;font-size:0.85rem;" onclick="notifyAdmin('${order.id}')">Admin WA</button>
-            <button style="background:#fee2e2;color:#dc2626;border:none;border-radius:8px;padding:0.4rem 0.8rem;cursor:pointer;font-weight:600;font-size:0.85rem;" onclick="deleteOrder('${order.id}')">🗑 Delete</button>
+        <td data-label="Actions">
+          <div style="display:flex;gap:0.5rem;flex-direction:row;">
+            <button style="background:#25D366;color:white;border:none;border-radius:8px;padding:0.4rem 0.8rem;cursor:pointer;font-weight:600;font-size:0.85rem;flex:1;" onclick="notifyAdmin('${order.id}')">Admin WA</button>
+            <button style="background:#fee2e2;color:#dc2626;border:none;border-radius:8px;padding:0.4rem 0.8rem;cursor:pointer;font-weight:600;font-size:0.85rem;flex:1;" onclick="deleteOrder('${order.id}')">🗑 Delete</button>
           </div>
         </td>
       </tr>

@@ -8,6 +8,8 @@ let searchQuery = '';
 // Customization State
 let currentItem = null;
 let selectedCategories = new Map(); // catId -> qty
+let categoryNotes = new Map(); // catId -> note string
+let customizeOpenFor = new Set(); // catIds with open text input
 let currentQty = 1; // used only for specials
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -127,8 +129,9 @@ function openCustomizeModal(itemId, type) {
   } else {
     const dbFlavor = window.allProducts && window.allProducts.find(p => p.id === itemId && !p.isSpecial);
     currentItem = { ...(dbFlavor || FLAVORS.find(f => f.id === itemId)), isSpecial: false };
-    selectedCategories = new Map(); // reset per-category quantities
-    selectedCategories.set('super', 1); // default: 1 Super
+    selectedCategories = new Map(); // reset per-category quantities — all start at 0
+    categoryNotes = new Map(); // reset per-category notes
+    customizeOpenFor = new Set(); // reset open customize inputs
   }
   
   currentQty = 1;
@@ -171,18 +174,27 @@ function updateModalUI() {
         ${CATEGORIES.map(cat => {
           const qty = selectedCategories.get(cat.id) || 0;
           const isSelected = qty > 0;
+          const isCustomizeOpen = customizeOpenFor.has(cat.id);
+          const noteVal = categoryNotes.get(cat.id) || '';
           return `
           <div class="category-option ${isSelected ? 'selected' : ''}">
             <div class="cat-info">
               <div class="cat-name">${tObj(cat.name)}</div>
               <div class="cat-price">${formatPrice(cat.price)}</div>
             </div>
-            <div class="cat-qty-control">
-              <button class="cat-qty-btn" onclick="changeCatQty('${cat.id}', -1)">−</button>
-              <span class="cat-qty-val">${qty}</span>
-              <button class="cat-qty-btn" onclick="changeCatQty('${cat.id}', 1)">+</button>
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+              <button class="btn btn-sm" onclick="event.stopPropagation(); toggleCatCustomize('${cat.id}')" style="font-size: 0.7rem; padding: 0.3rem 0.6rem; border: 1px solid var(--primary-200); background: ${isCustomizeOpen ? 'var(--primary-500)' : 'var(--primary-50)'}; color: ${isCustomizeOpen ? '#fff' : 'var(--primary-700)'}; border-radius: 6px; cursor: pointer; white-space: nowrap;">📝 Customize</button>
+              <div class="cat-qty-control">
+                <button class="cat-qty-btn" onclick="changeCatQty('${cat.id}', -1)">−</button>
+                <span class="cat-qty-val">${qty}</span>
+                <button class="cat-qty-btn" onclick="changeCatQty('${cat.id}', 1)">+</button>
+              </div>
             </div>
-          </div>`;
+          </div>
+          ${isCustomizeOpen ? `
+          <div style="margin-top: -0.3rem; margin-bottom: 0.6rem; padding: 0 0.2rem;">
+            <input type="text" class="form-input cat-note-input" data-cat-id="${cat.id}" value="${noteVal.replace(/"/g, '&quot;')}" placeholder="e.g. extra sweet, less ice..." oninput="saveCatNote('${cat.id}', this.value)" style="font-size: 0.82rem; padding: 0.55rem 0.75rem; border-radius: 8px;">
+          </div>` : ''}`;
         }).join('')}
       </div>
     `;
@@ -208,14 +220,6 @@ function updateModalUI() {
     `;
   }
 
-  // ── Custom note ──
-  html += `
-    <div class="form-group" style="margin-top: 0.75rem;">
-      <label style="font-size: 0.85rem; color: var(--text-light);">📝 Special instructions (optional)</label>
-      <input type="text" id="manualNote" class="form-input" placeholder="e.g. extra sweet, less ice..." style="font-size: 0.85rem; margin-top: 0.4rem;">
-    </div>
-  `;
-
   document.getElementById('modalContent').innerHTML = html;
   updatePriceSummary();
 }
@@ -229,6 +233,26 @@ function changeCatQty(catId, delta) {
     selectedCategories.set(catId, newQty);
   }
   updateModalUI();
+}
+
+function toggleCatCustomize(catId) {
+  if (customizeOpenFor.has(catId)) {
+    customizeOpenFor.delete(catId);
+  } else {
+    customizeOpenFor.add(catId);
+  }
+  updateModalUI();
+  // Auto-focus the input if it just opened
+  if (customizeOpenFor.has(catId)) {
+    setTimeout(() => {
+      const input = document.querySelector(`.cat-note-input[data-cat-id="${catId}"]`);
+      if (input) input.focus();
+    }, 50);
+  }
+}
+
+function saveCatNote(catId, value) {
+  categoryNotes.set(catId, value);
 }
 
 function toggleCategory(catId) {
@@ -282,9 +306,6 @@ function updatePriceSummary() {
 function addToCartAndClose() {
   if (!currentItem) return;
 
-  const manualInput = document.getElementById('manualNote');
-  const note = manualInput ? manualInput.value.trim() : '';
-
   if (currentItem.isSpecial) {
     addToCart({
       id: currentItem.id + '-' + Date.now(),
@@ -293,7 +314,7 @@ function addToCartAndClose() {
       isSpecial: true,
       category: null,
       toppings: [],
-      note: note,
+      note: '',
       qty: currentQty,
       basePrice: currentItem.price,
       toppingsPrice: 0,
@@ -301,11 +322,12 @@ function addToCartAndClose() {
       totalPrice: currentItem.price
     });
   } else {
-    // One cart item per selected category, with its own qty from the Map
+    // One cart item per selected category, with its own qty and note
     if (selectedCategories.size === 0) return;
     selectedCategories.forEach((qty, catId) => {
       const cat = CATEGORIES.find(c => c.id === catId);
       if (!cat || qty === 0) return;
+      const note = (categoryNotes.get(catId) || '').trim();
       addToCart({
         id: currentItem.id + '-' + cat.id + '-' + Date.now(),
         name: currentItem.name,
