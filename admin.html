@@ -71,6 +71,31 @@
 
     .admin-tab { width: 100% !important; }
 
+    /* Toggle switch */
+    .toggle-track {
+      display: inline-flex;
+      align-items: center;
+      width: 56px;
+      height: 30px;
+      border-radius: 999px;
+      background: #D1D5DB;
+      position: relative;
+      transition: background .25s;
+      cursor: pointer;
+    }
+    .toggle-track.on { background: #16A34A; }
+    .toggle-thumb {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: #fff;
+      position: absolute;
+      left: 3px;
+      box-shadow: 0 1px 4px rgba(0,0,0,.2);
+      transition: left .25s;
+    }
+    .toggle-track.on .toggle-thumb { left: 29px; }
+
     .orders-table-wrapper {
       width: 100% !important;
       max-width: 100% !important;
@@ -501,6 +526,9 @@
       <div class="admin-sidebar-link" data-tab="contacts" onclick="switchTab('contacts')">
         <span class="sidebar-emoji">✉️</span> <span>Messages</span>
       </div>
+      <div class="admin-sidebar-link" data-tab="settings" onclick="switchTab('settings')">
+        <span class="sidebar-emoji">⚙️</span> <span>Settings</span>
+      </div>
     </aside>
 
     <!-- ══════════════════════════════════════
@@ -742,6 +770,32 @@
         </div>
       </div>
 
+      <!-- Settings Tab -->
+      <div id="tab-settings" class="admin-tab">
+        <h3 style="margin-bottom:1.5rem;color:var(--text);">Site Settings</h3>
+
+        <div class="glass-card" style="max-width:480px;padding:2rem;border-radius:16px;border:1px solid var(--adm-border);">
+          <h4 style="margin-bottom:.5rem;color:var(--text);">🚫 Closed Mode</h4>
+          <p style="color:var(--adm-muted);font-size:.9rem;margin-bottom:1.4rem;">
+            When enabled, visitors to the home page are redirected to the "Currently Unavailable – See you in Feb 2027" page.
+          </p>
+
+          <div style="display:flex;align-items:center;gap:1rem;">
+            <label class="toggle-switch" for="closedModeToggle" style="cursor:pointer;">
+              <input type="checkbox" id="closedModeToggle" onchange="setClosedMode(this.checked)" style="display:none;">
+              <span class="toggle-track" id="toggleTrack">
+                <span class="toggle-thumb" id="toggleThumb"></span>
+              </span>
+            </label>
+            <span id="closedModeLabel" style="font-weight:700;color:var(--adm-muted);font-size:.95rem;">Loading…</span>
+          </div>
+
+          <div style="margin-top:1.2rem;">
+            <a href="closed.html" target="_blank" class="btn btn-outline btn-sm" style="font-size:.85rem;">Preview Closed Page ↗</a>
+          </div>
+        </div>
+      </div>
+
     </main>
   </div><!-- /adminPanel -->
 
@@ -908,6 +962,42 @@
         if (e.key === 'Escape') closeSidebar();
       });
     })();
+  </script>
+
+  <script>
+    // ── Closed Mode Settings ──
+    function updateToggleUI(isOn) {
+      const track = document.getElementById('toggleTrack');
+      const label = document.getElementById('closedModeLabel');
+      const input = document.getElementById('closedModeToggle');
+      if (!track) return;
+      if (isOn) {
+        track.classList.add('on');
+        label.textContent = 'Closed Mode is ON – visitors see the unavailable page';
+        label.style.color = '#DC2626';
+      } else {
+        track.classList.remove('on');
+        label.textContent = 'Closed Mode is OFF – site is open normally';
+        label.style.color = '#16A34A';
+      }
+      if (input) input.checked = isOn;
+    }
+
+    function setClosedMode(enabled) {
+      updateToggleUI(enabled);
+      DB.setSiteSettings({ closedMode: enabled }).catch(function (e) {
+        alert('Failed to save: ' + e.message);
+        updateToggleUI(!enabled);
+      });
+    }
+    window.setClosedMode = setClosedMode;
+
+    // Load settings when Settings tab becomes active
+    document.addEventListener('DOMContentLoaded', function () {
+      DB.getSiteSettings(function (s) {
+        updateToggleUI(!!(s && s.closedMode));
+      });
+    });
   </script>
 
 </body>

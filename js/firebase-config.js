@@ -153,6 +153,16 @@ const DB = {
     return db.ref(`products/${productId}`).remove();
   },
 
+  // Site Settings (closed mode, etc.)
+  getSiteSettings(callback) {
+    db.ref('siteSettings').on('value', snap => {
+      callback(snap.val() || {});
+    });
+  },
+  setSiteSettings(settings) {
+    return db.ref('siteSettings').update(settings);
+  },
+
   // Global Notifications (CMS)
   pushNotification(notif) {
     return db.ref('notifications').push(notif);

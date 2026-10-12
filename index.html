@@ -13,6 +13,18 @@
   <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-database-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-storage-compat.js"></script>
+  <script>
+    // Check site closed mode before page renders
+    (function () {
+      const _app = firebase.initializeApp({
+        apiKey: "AIzaSyAkV15rkVY0ZhxF2NgWXrv7nr6L3f34UGM",
+        databaseURL: "https://drnagola-3983c-default-rtdb.firebaseio.com"
+      }, '__closed_check__');
+      firebase.database(_app).ref('siteSettings/closedMode').once('value').then(function (snap) {
+        if (snap.val() === true) window.location.replace('closed.html');
+      }).catch(function(){});
+    })();
+  </script>
 
   <link rel="stylesheet" href="css/style.css">
   <link rel="stylesheet" href="css/refresh.css">
