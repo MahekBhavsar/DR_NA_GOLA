@@ -130,7 +130,7 @@ function renderNavbar(activePage) {
   nav.innerHTML = `
     <div class="nav-container">
       <a href="index.html" class="nav-logo">
-        <img src="assets/logo.png" alt="Dr Na Gola Logo" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect fill=%22%231565C0%22 width=%22100%22 height=%22100%22 rx=%2250%22/><text x=%2250%25%22 y=%2255%25%22 text-anchor=%22middle%22 fill=%22white%22 font-size=%2240%22>&#127847;</text></svg>'">
+        <img src="/assets/logo.png" alt="Dr Na Gola Logo" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect fill=%22%231565C0%22 width=%22100%22 height=%22100%22 rx=%2250%22/><text x=%2250%25%22 y=%2255%25%22 text-anchor=%22middle%22 fill=%22white%22 font-size=%2240%22>&#127847;</text></svg>'">
         <span class="nav-logo-text" data-t="brand_name">${t('brand_name')}</span>
       </a>
       <div class="nav-links" id="navLinks">
@@ -184,7 +184,7 @@ function renderFooter() {
       <div class="footer-content">
         <div class="footer-brand">
           <div class="footer-logo">
-            <img src="assets/logo.png" alt="Logo" onerror="this.style.display='none'">
+            <img src="/assets/logo.png" alt="Logo" onerror="this.style.display='none'">
             <span data-t="brand_name">${t('brand_name')}</span>
           </div>
           <p data-t="brand_tagline">${t('brand_tagline')}</p>

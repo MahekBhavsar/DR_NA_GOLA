@@ -5,8 +5,8 @@
 }
 
 .home-hero {
-  min-height: 94vh;
-  padding: 112px 1.5rem 4.5rem;
+  min-height: calc(94vh - 70px);
+  padding: 3rem 1.5rem 4.5rem;
   display: flex;
   align-items: center;
   background:

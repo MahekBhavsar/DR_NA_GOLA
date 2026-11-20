@@ -195,13 +195,14 @@ h4 { font-size: 1.25rem; }
   left: 0;
   right: 0;
   z-index: 1000;
-  background: var(--bg-glass);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border-bottom: 1px solid rgba(33, 150, 243, 0.1);
+  background: #ffffff;
+  border-bottom: 1px solid rgba(33, 150, 243, 0.12);
+  box-shadow: 0 2px 12px rgba(13, 71, 161, 0.08);
   transition: var(--transition);
   padding: 0;
 }
+/* Reserve space for the fixed navbar so hero/header never sits under it */
+body:has(> nav.navbar) { padding-top: 70px; }
 .navbar.scrolled {
   background: rgba(255, 255, 255, 0.95);
   box-shadow: var(--shadow-md);
@@ -1519,13 +1520,17 @@ textarea.form-input {
 .footer {
   background: var(--bg-dark);
   color: rgba(255, 255, 255, 0.7);
-  padding: 1.5rem 0 0.5rem;
+  padding: 2.5rem 0 1rem;
+}
+/* Space between page content and footer on inner pages */
+main.section {
+  padding-bottom: 4rem !important;
 }
 .footer-content {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 1rem;
-  margin-bottom: 1rem;
+  gap: 2rem;
+  margin-bottom: 1.75rem;
 }
 .footer-brand .footer-logo {
   display: flex;
@@ -1541,23 +1546,23 @@ textarea.form-input {
 .footer-brand .footer-logo span {
   color: var(--white);
   font-weight: 800;
-  font-size: 1.1rem;
+  font-size: 1.35rem;
 }
 .footer-brand p {
-  font-size: 0.85rem;
-  line-height: 1.4;
+  font-size: 1.05rem;
+  line-height: 1.5;
 }
 .footer h4 {
   color: var(--white);
-  margin-bottom: 0.75rem;
-  font-size: 0.95rem;
+  margin-bottom: 1rem;
+  font-size: 1.2rem;
 }
 .footer-links a {
   display: block;
-  padding: 0.2rem 0;
-  color: rgba(255,255,255,0.6);
+  padding: 0.3rem 0;
+  color: rgba(255,255,255,0.75);
   transition: var(--transition);
-  font-size: 0.85rem;
+  font-size: 1.05rem;
 }
 .footer-links a:hover {
   color: var(--primary-300);
@@ -1565,10 +1570,17 @@ textarea.form-input {
 }
 .footer-bottom {
   text-align: center;
-  padding-top: 0.75rem;
+  padding-top: 1rem;
   border-top: 1px solid rgba(255,255,255,0.1);
-  font-size: 0.8rem;
+  font-size: 0.95rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  column-gap: 0.5rem;
 }
+.footer-bottom p { margin: 0; }
+.footer-bottom p + p::before { content: "|"; margin-right: 0.5rem; opacity: 0.5; }
 
 /* ── Admin Panel ── */
 .admin-login-wrapper {
@@ -1780,7 +1792,7 @@ textarea.form-input {
 /* ── Page Header ── */
 .page-header {
   background: linear-gradient(135deg, var(--primary-900), var(--primary-600));
-  padding: 7rem 0 3rem;
+  padding: 3rem 0;
   text-align: center;
   color: var(--white);
   margin-bottom: 2rem;
@@ -1788,6 +1800,10 @@ textarea.form-input {
 .page-header h1 {
   color: var(--white);
   margin-bottom: 0.5rem;
+}
+.page-header h1:last-child,
+.page-header p:last-child {
+  margin-bottom: 0;
 }
 .page-header p {
   opacity: 0.8;
