@@ -28,11 +28,12 @@
   <main class="section" style="padding-top: 0; min-height: 50vh;">
     <div class="container" style="max-width: 600px;">
       
-      <div class="form-group fade-in">
-        <label>Phone Number or Order ID</label>
-        <div style="display: flex; gap: 0.5rem;">
-          <input type="text" id="trackInput" class="form-input" placeholder="e.g. 9876543210 or DR-5X9Q" onkeyup="if(event.key==='Enter') searchOrder()">
-          <button class="btn btn-primary" onclick="searchOrder()">🔍 Search</button>
+      <div class="trk-search fade-in">
+        <label for="trackInput">Phone Number or Order ID</label>
+        <div class="trk-search-box">
+          <svg class="trk-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+          <input type="text" id="trackInput" placeholder="e.g. 9876543210 or DR-5X9Q" onkeyup="if(event.key==='Enter') searchOrder()">
+          <button class="btn btn-primary" onclick="searchOrder()">Search</button>
         </div>
       </div>
 

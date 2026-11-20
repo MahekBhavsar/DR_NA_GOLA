@@ -832,3 +832,295 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* ── Dr. Special Collection: card redesign ── */
+.home-classic .specials-grid {
+  width: 100%;
+  margin: 0 auto;
+  align-items: stretch;
+  justify-content: center;
+}
+.home-classic .specials-grid > .special-card {
+  background: #ffffff;
+  border: 1px solid #e3ecf7;
+  border-radius: 18px;
+  padding: 0.75rem 0.75rem 1rem;
+  box-shadow: 0 10px 30px rgba(16, 35, 60, 0.07);
+  align-items: stretch;
+  text-align: center;
+}
+.home-classic .special-card::before { display: none; }
+.home-classic .special-card:hover {
+  transform: translateY(-6px);
+  border-color: #b9d6f5;
+  box-shadow: 0 18px 40px rgba(21, 101, 192, 0.18);
+}
+
+/* Photo */
+.home-classic .special-card .special-card-img-wrap {
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: 0.85rem !important;
+  background: #f1f6fc;
+}
+.home-classic .special-card .special-card-img {
+  width: 100%;
+  height: 100%;
+  max-width: none !important;
+  max-height: none !important;
+  object-fit: cover !important;
+  border-radius: 0 !important;
+  transition: transform 0.45s ease;
+}
+.home-classic .special-card:hover .special-card-img { transform: scale(1.06); }
+
+/* Rank badge */
+.home-classic .special-badge {
+  top: 1.2rem;
+  right: 1.2rem;
+  font-size: 0.72rem;
+  letter-spacing: 0.2px;
+  padding: 0.3rem 0.7rem;
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--primary-800);
+  border: 1px solid rgba(21, 101, 192, 0.2);
+  backdrop-filter: blur(6px);
+}
+.home-classic .special-badge.top-selling-badge {
+  background: linear-gradient(135deg, #fff7d6, #f2c94c);
+  color: #3b2a00;
+  border: 1px solid #d4af37;
+}
+
+/* Text */
+.home-classic .special-card .name {
+  font-size: 1.08rem;
+  font-weight: 800;
+  color: #10233c;
+  padding: 0 0.25rem;
+}
+.home-classic .special-card .name-sub {
+  font-size: 0.82rem;
+  line-height: 1.4;
+  color: #6b7c90;
+  min-height: 2.8em;
+  margin: 0.15rem 0.25rem 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Price: clean text with a divider, aligned across cards */
+.home-classic .special-card .price-container {
+  background: transparent;
+  padding: 0.7rem 0 0;
+  margin: 0.7rem 0.25rem 0.85rem;
+  border-top: 1px dashed #d3e2f3;
+  border-radius: 0;
+  display: block;
+  width: auto;
+}
+.home-classic .special-card .price {
+  font-size: 1.55rem;
+  font-weight: 900;
+  color: var(--primary-700) !important;
+  line-height: 1;
+}
+
+/* Buttons pinned to the bottom */
+.home-classic .special-card-btns { margin-top: auto; }
+.home-classic .special-card-btns .btn {
+  border-radius: 10px !important;
+  min-height: 38px;
+}
+
+/* ── Dr. Special: gradient colours + hover effects ── */
+.home-classic .specials-grid > .special-card {
+  background: linear-gradient(180deg, #ffffff 0%, #f3f8ff 100%);
+  transition: transform 0.35s ease, box-shadow 0.35s ease, border-color 0.35s ease, background 0.35s ease;
+}
+/* Gradient accent line that grows in on hover */
+.home-classic .special-card::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  width: 0;
+  height: 4px;
+  transform: translateX(-50%);
+  background: linear-gradient(90deg, #42a5f5, #1565c0, #7c4dff);
+  border-radius: 4px 4px 0 0;
+  transition: width 0.4s ease;
+}
+.home-classic .special-card:hover::after { width: 100%; }
+.home-classic .specials-grid > .special-card:hover {
+  background: linear-gradient(180deg, #ffffff 0%, #e3f0ff 100%);
+  border-color: #8ec3f4;
+  box-shadow: 0 20px 44px rgba(21, 101, 192, 0.22), 0 0 0 4px rgba(66, 165, 245, 0.12);
+}
+
+/* Name turns gradient on hover */
+.home-classic .special-card .name {
+  transition: color 0.3s ease;
+}
+.home-classic .special-card:hover .name {
+  background: linear-gradient(90deg, #0d47a1, #1e88e5);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Gradient price */
+.home-classic .special-card .price {
+  background: linear-gradient(135deg, #0d47a1, #1e88e5);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent !important;
+  transition: transform 0.3s ease;
+}
+.home-classic .special-card:hover .price { transform: scale(1.08); }
+
+/* Rank badge gradient */
+.home-classic .special-badge:not(.top-selling-badge) {
+  background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+  color: #0d47a1;
+  transition: transform 0.3s ease;
+}
+.home-classic .special-card:hover .special-badge { transform: scale(1.08) rotate(-3deg); }
+
+/* Buttons: gradient + sheen sweep */
+.home-classic .special-card-btns .btn,
+.home-classic .home-section-action .btn {
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.25s ease, box-shadow 0.25s ease, background 0.3s ease, color 0.3s ease;
+}
+.home-classic .special-card-btns .btn:not(.btn-primary) {
+  background: linear-gradient(135deg, #e3f2fd, #cfe6fb) !important;
+  color: #0d47a1 !important;
+}
+.home-classic .special-card-btns .btn:not(.btn-primary):hover {
+  background: linear-gradient(135deg, #42a5f5, #1e88e5) !important;
+  color: #ffffff !important;
+  border-color: transparent !important;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 18px rgba(30, 136, 229, 0.35);
+}
+.home-classic .special-card-btns .btn-primary,
+.home-classic .home-section-action .btn-primary {
+  background: linear-gradient(135deg, #1e88e5 0%, #1565c0 50%, #5e35b1 100%);
+  background-size: 160% 160%;
+  background-position: 0% 50%;
+  border: none;
+}
+.home-classic .special-card-btns .btn-primary:hover,
+.home-classic .home-section-action .btn-primary:hover {
+  background-position: 100% 50%;
+  transform: translateY(-3px);
+  box-shadow: 0 12px 26px rgba(21, 101, 192, 0.45);
+}
+.home-classic .special-card-btns .btn:active,
+.home-classic .home-section-action .btn:active { transform: translateY(0) scale(0.97); }
+.home-classic .special-card-btns .btn::before,
+.home-classic .home-section-action .btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -75%;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(120deg, transparent, rgba(255, 255, 255, 0.45), transparent);
+  transform: skewX(-20deg);
+}
+.home-classic .special-card-btns .btn:hover::before,
+.home-classic .home-section-action .btn:hover::before {
+  left: 130%;
+  transition: left 0.6s ease;
+}
+
+/* View Full Menu: larger pill with arrow nudge */
+.home-classic .home-section-action .btn {
+  padding: 0.95rem 2.6rem;
+  border-radius: 999px;
+  font-size: 1.05rem;
+  letter-spacing: 0.3px;
+}
+.home-classic .home-section-action .btn::after {
+  content: '→';
+  display: inline-block;
+  margin-left: 0.5rem;
+  transition: transform 0.25s ease;
+}
+.home-classic .home-section-action .btn:hover::after { transform: translateX(6px); }
+
+/* ── Why Customers Choose Us: feature cards ── */
+.home-classic .features-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.5rem;
+  margin-top: 2.5rem;
+}
+.home-classic .feature-card {
+  height: auto;
+  perspective: none;
+  cursor: default;
+  position: relative;
+  overflow: hidden;
+  padding: 2rem 1.25rem 1.75rem;
+  border-radius: 18px;
+  background: linear-gradient(180deg, #ffffff 0%, #f3f8ff 100%);
+  border: 1px solid #e3ecf7;
+  box-shadow: 0 10px 30px rgba(16, 35, 60, 0.07);
+  transition: transform 0.35s ease, box-shadow 0.35s ease, border-color 0.35s ease, background 0.35s ease;
+}
+.home-classic .feature-card::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  width: 0;
+  height: 4px;
+  transform: translateX(-50%);
+  background: linear-gradient(90deg, #42a5f5, #1565c0, #7c4dff);
+  border-radius: 4px 4px 0 0;
+  transition: width 0.4s ease;
+}
+.home-classic .feature-card:hover {
+  transform: translateY(-6px);
+  border-color: #8ec3f4;
+  background: linear-gradient(180deg, #ffffff 0%, #e3f0ff 100%);
+  box-shadow: 0 20px 44px rgba(21, 101, 192, 0.2);
+}
+.home-classic .feature-card:hover::after { width: 100%; }
+.home-classic .feature-card .feature-icon {
+  width: 68px;
+  height: 68px;
+  border-radius: 18px;
+  margin-bottom: 1.1rem;
+  background: linear-gradient(135deg, #1e88e5, #1565c0 55%, #5e35b1);
+  color: #ffffff;
+  box-shadow: 0 10px 22px rgba(21, 101, 192, 0.3);
+}
+.home-classic .feature-card:hover .feature-icon {
+  background: linear-gradient(135deg, #42a5f5, #1e88e5 55%, #7c4dff);
+  box-shadow: 0 14px 28px rgba(30, 136, 229, 0.45);
+  transform: scale(1.08) rotate(-4deg);
+}
+.home-classic .feature-card h4 {
+  font-size: 1.1rem;
+  font-weight: 800;
+  margin: 0 0 0.4rem;
+}
+.home-classic .feature-card p {
+  font-size: 0.92rem;
+  line-height: 1.5;
+  margin: 0;
+}
+@media (max-width: 900px) {
+  .home-classic .features-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 520px) {
+  .home-classic .features-grid { grid-template-columns: 1fr; gap: 1rem; }
+}
