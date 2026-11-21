@@ -10,6 +10,7 @@
   <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-storage-compat.js"></script>
 
   <!-- CSS -->
@@ -49,21 +50,26 @@
           <div class="card">
             <h3 style="margin-bottom: 1.5rem; color: var(--text);" data-t="checkout_title">Checkout Details</h3>
 
-            <form id="checkoutForm" onsubmit="handleCheckout(event)">
-
-              <!-- Name -->
-              <div class="form-group">
-                <label data-t="checkout_name">Your Full Name</label>
-                <input type="text" id="custName" class="form-input" required
-                  placeholder="Full Name (First & Last)" autocomplete="name">
+            <!-- Shown when the customer is not logged in -->
+            <div id="loginNotice" class="login-notice" style="display:none;">
+              <div class="login-notice-text">
+                <strong id="loginNoticeTitle">Please log in to place your order</strong>
+                <span id="loginNoticeSub">Your cart is saved. Log in or create an account to continue.</span>
               </div>
+              <a href="login.html?next=cart.html" class="btn btn-primary btn-sm" id="loginNoticeBtn">Log in / Sign up</a>
+            </div>
 
-              <!-- Phone -->
-              <div class="form-group">
-                <label data-t="checkout_phone">Phone Number</label>
-                <input type="tel" id="custPhone" class="form-input" required
-                  pattern="[0-9]{10}" maxlength="10" inputmode="numeric"
-                  placeholder="10-digit phone number" autocomplete="tel">
+            <form id="checkoutForm" onsubmit="handleCheckout(event)" style="display:none;">
+
+              <!-- Who is ordering (taken from the customer's profile) -->
+              <div class="checkout-as" id="checkoutAs">
+                <div class="checkout-as-avatar" id="coAvatar">?</div>
+                <div class="checkout-as-info">
+                  <div class="checkout-as-label" id="coLabel">Ordering as</div>
+                  <div class="checkout-as-name" id="coName"></div>
+                  <div class="checkout-as-phone" id="coPhone"></div>
+                </div>
+                <a href="profile.html" class="checkout-as-edit" id="coEdit">Edit</a>
               </div>
 
               <!-- Order Type -->
@@ -199,6 +205,7 @@
   <!-- JS — order matters! -->
   <script src="/js/firebase-config.js"></script>
   <script src="/js/data.js"></script>
+  <script src="/js/auth.js"></script>
   <script src="/js/app.js"></script>
   <script src="/js/cart.js"></script>
 </body>

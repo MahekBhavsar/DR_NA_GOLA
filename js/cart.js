@@ -9,10 +9,51 @@ document.addEventListener('DOMContentLoaded', () => {
   renderNavbar('cart');
   renderFooter();
   renderCart();
+  applyCartAuthState();
+  window.addEventListener('customer-auth-changed', applyCartAuthState);
 });
+
+// ── Login gate: checkout needs a logged-in customer ──
+async function applyCartAuthState() {
+  const checkoutForm = document.getElementById('checkoutForm');
+  if (typeof CustomerAuth === 'undefined') { if (checkoutForm) checkoutForm.style.display = ''; return; }
+  const user = await CustomerAuth.ready();
+  const profile = CustomerAuth.getProfile();
+  const loggedIn = !!(user && profile);
+  const gu = typeof currentLang !== 'undefined' && currentLang === 'gu';
+
+  // Logged out: show ONLY the login prompt (no name / phone / payment fields yet)
+  if (checkoutForm) checkoutForm.style.display = loggedIn ? '' : 'none';
+
+  const notice = document.getElementById('loginNotice');
+  const btn = document.getElementById('placeOrderBtn');
+
+  if (notice) {
+    notice.style.display = loggedIn ? 'none' : 'flex';
+    const title = document.getElementById('loginNoticeTitle');
+    const sub = document.getElementById('loginNoticeSub');
+    const link = document.getElementById('loginNoticeBtn');
+    if (title) title.textContent = gu ? 'ઓર્ડર કરવા માટે લૉગિન કરો' : 'Please log in to place your order';
+    if (sub) sub.textContent = gu ? 'તમારું કાર્ટ સુરક્ષિત છે. આગળ વધવા લૉગિન અથવા સાઇન અપ કરો.' : 'Your cart is saved. Log in or create an account to continue.';
+    if (link) link.textContent = gu ? 'લૉગિન / સાઇન અપ' : 'Log in / Sign up';
+  }
+  if (btn && !btn.disabled) {
+    btn.textContent = loggedIn ? (gu ? 'ઓર્ડર કરો' : 'Place Order') : (gu ? 'ઓર્ડર માટે લૉગિન કરો' : 'Login to Place Order');
+  }
+  if (loggedIn) {
+    // Name + phone come from the profile, so the customer doesn't retype them
+    const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+    set('coAvatar', (profile.name || '?').charAt(0).toUpperCase());
+    set('coLabel', gu ? 'આ નામે ઓર્ડર' : 'Ordering as');
+    set('coName', profile.name || '');
+    set('coPhone', profile.phone ? '+91 ' + profile.phone : '');
+    set('coEdit', gu ? 'બદલો' : 'Edit');
+  }
+}
 
 function onLangChange() {
   renderCart();
+  applyCartAuthState();
 }
 
 // ── Render Cart Items ──────────────────────────
@@ -160,7 +201,7 @@ function showSuccessScreen(orderData) {
   if (successScreen) successScreen.style.display = 'block';
   if (displayId)     displayId.textContent       = orderData.orderId;
   if (displayName)   displayName.textContent     = orderData.customerName;
-  if (trackBtn)      trackBtn.href               = `track.html?id=${orderData.orderId}`;
+  if (trackBtn)      trackBtn.href               = `track.html?id=${encodeURIComponent(orderData.orderId)}`;
 
   if (orderData.paymentMethod === 'qr') {
     const qrBox = document.getElementById('qrInstructions');
@@ -197,25 +238,21 @@ async function handleCheckout(e) {
     return;
   }
 
-  // ── 2. Validate fields ──
-  const nameEl  = document.getElementById('custName');
-  const phoneEl = document.getElementById('custPhone');
-
-  if (!nameEl || !nameEl.value.trim()) {
-    cartToast('Please enter your full name.', 'error');
-    if (nameEl) nameEl.focus();
-    return;
-  }
-  if (nameEl.value.trim().split(/\s+/).length < 2) {
-    cartToast('Please enter your full name (First & Last).', 'error');
-    nameEl.focus();
+  // ── 1b. Login is mandatory ──
+  const authUser = typeof CustomerAuth !== 'undefined' ? await CustomerAuth.ready() : null;
+  const authProfile = typeof CustomerAuth !== 'undefined' ? CustomerAuth.getProfile() : null;
+  if (!authUser || !authProfile) {
+    cartToast('Please log in to place your order.', 'error');
+    setTimeout(() => goLogin('cart.html'), 700);
     return;
   }
 
-  const phone = phoneEl ? phoneEl.value.trim() : '';
-  if (!/^[0-9]{10}$/.test(phone)) {
-    cartToast('Please enter a valid 10-digit phone number.', 'error');
-    if (phoneEl) phoneEl.focus();
+  // ── 2. Customer details come from the profile ──
+  const customerName = String(authProfile.name || '').trim();
+  const phone = String(authProfile.phone || '').trim();
+  if (customerName.split(/\s+/).length < 2 || !/^[0-9]{10}$/.test(phone)) {
+    cartToast('Please complete your profile (full name and phone) first.', 'error');
+    setTimeout(() => { window.location.href = 'profile.html'; }, 900);
     return;
   }
 
@@ -249,7 +286,8 @@ async function handleCheckout(e) {
 
   const orderData = {
     orderId,
-    customerName : nameEl.value.trim(),
+    uid          : authUser.uid,
+    customerName,
     phone,
     address      : '',
     orderType,

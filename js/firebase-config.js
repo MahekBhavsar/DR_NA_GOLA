@@ -93,6 +93,15 @@ const DB = {
     });
   },
 
+  // Customers (admin): every registered profile
+  listenUsers(callback) {
+    db.ref('users').on('value', snap => {
+      const users = [];
+      snap.forEach(child => { users.push({ uid: child.key, ...child.val() }); });
+      callback(users);
+    });
+  },
+
   // Contact messages
   pushContact(msg) {
     return db.ref('contacts').push(msg);
@@ -175,6 +184,19 @@ const DB = {
       });
       callback(notif);
     });
+  },
+  // Private notifications: only that customer (and the admin) can read userNotifications/{uid}
+  pushUserNotification(uid, notif) {
+    return db.ref('userNotifications/' + uid).push(notif);
+  },
+  listenUserNotifications(uid, callback) {
+    const ref = db.ref('userNotifications/' + uid).orderByChild('timestamp').limitToLast(1);
+    ref.on('value', snap => {
+      let notif = null;
+      snap.forEach(child => { notif = { id: child.key, ...child.val() }; });
+      callback(notif);
+    });
+    return ref;
   },
   listenAllNotifications(callback) {
     db.ref('notifications').orderByChild('timestamp').limitToLast(25).on('value', snap => {

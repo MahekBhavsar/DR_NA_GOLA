@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="gu">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login | Doctor Na Gola</title>
+  <link rel="icon" type="image/png" href="/assets/logo.png">
+  <link rel="apple-touch-icon" href="/assets/logo.png">
+
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-auth-compat.js"></script>
+
+  <!-- CSS -->
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+  <nav id="navbar"></nav>
+
+  <main class="section auth-section">
+    <div class="container">
+      <div class="auth-card fade-in">
+
+        <div class="auth-brand">
+          <img src="/assets/logo.png" alt="Doctor Na Gola" onerror="this.style.display='none'">
+          <h1 data-at="welcome">Welcome to Doctor Na Gola</h1>
+          <p data-at="welcome_sub">Log in to place your order and track it anytime.</p>
+        </div>
+
+        <!-- Tabs -->
+        <div class="auth-tabs" id="authTabs">
+          <button type="button" class="auth-tab active" data-tab="login" onclick="showPanel('login')" data-at="tab_login">Log in</button>
+          <button type="button" class="auth-tab" data-tab="signup" onclick="showPanel('signup')" data-at="tab_signup">Sign up</button>
+        </div>
+
+        <div class="auth-message" id="authMessage" role="alert" style="display:none;"></div>
+
+        <!-- LOGIN -->
+        <form class="auth-panel active" id="panel-login" onsubmit="doLogin(event)" novalidate>
+          <div class="form-group">
+            <label data-at="email">Email</label>
+            <input type="email" id="loginEmail" class="form-input" autocomplete="email" data-at-ph="email_ph" placeholder="you@example.com">
+          </div>
+          <div class="form-group">
+            <label data-at="password">Password</label>
+            <div class="auth-pass">
+              <input type="password" id="loginPassword" class="form-input" autocomplete="current-password" data-at-ph="password_ph" placeholder="Your password">
+              <button type="button" class="auth-eye" onclick="togglePass(this)" aria-label="Show password">👁</button>
+            </div>
+          </div>
+          <button type="submit" class="btn btn-primary btn-block auth-submit" id="loginBtn" data-at="btn_login">Log in</button>
+          <button type="button" class="auth-link" onclick="showPanel('reset')" data-at="forgot">Forgot password?</button>
+        </form>
+
+        <!-- SIGN UP -->
+        <form class="auth-panel" id="panel-signup" onsubmit="doSignup(event)" novalidate>
+          <div class="form-group">
+            <label data-at="name">Full name</label>
+            <input type="text" id="signupName" class="form-input" autocomplete="name" data-at-ph="name_ph" placeholder="First & Last name">
+          </div>
+          <div class="form-group">
+            <label data-at="email">Email</label>
+            <input type="email" id="signupEmail" class="form-input" autocomplete="email" data-at-ph="email_ph" placeholder="you@example.com">
+          </div>
+          <div class="form-group">
+            <label data-at="phone">Mobile number</label>
+            <div class="auth-phone">
+              <span class="auth-prefix">+91</span>
+              <input type="tel" id="signupPhone" class="form-input" maxlength="10" inputmode="numeric" autocomplete="tel" data-at-ph="phone_ph" placeholder="10-digit mobile number">
+            </div>
+          </div>
+          <div class="form-group">
+            <label data-at="password">Password</label>
+            <div class="auth-pass">
+              <input type="password" id="signupPassword" class="form-input" autocomplete="new-password" data-at-ph="password_new_ph" placeholder="At least 6 characters">
+              <button type="button" class="auth-eye" onclick="togglePass(this)" aria-label="Show password">👁</button>
+            </div>
+          </div>
+          <div class="form-group">
+            <label data-at="password2">Confirm password</label>
+            <input type="password" id="signupPassword2" class="form-input" autocomplete="new-password" data-at-ph="password2_ph" placeholder="Type the password again">
+          </div>
+          <button type="submit" class="btn btn-primary btn-block auth-submit" id="signupBtn" data-at="btn_signup">Create account</button>
+          <p class="auth-hint" data-at="signup_hint">Use a real email, you'll need it if you forget your password.</p>
+        </form>
+
+        <!-- FORGOT PASSWORD -->
+        <form class="auth-panel" id="panel-reset" onsubmit="doReset(event)" novalidate>
+          <h2 class="auth-title" data-at="reset_title">Reset your password</h2>
+          <p class="auth-hint auth-hint-top" data-at="reset_sub">Enter your email. We'll send you a link to set a new password.</p>
+          <div class="form-group">
+            <label data-at="email">Email</label>
+            <input type="email" id="resetEmail" class="form-input" autocomplete="email" data-at-ph="email_ph" placeholder="you@example.com">
+          </div>
+          <button type="submit" class="btn btn-primary btn-block auth-submit" id="resetBtn" data-at="btn_send_link">Send reset link</button>
+          <button type="button" class="auth-link" onclick="showPanel('login')" data-at="back_login">Back to log in</button>
+        </form>
+
+      </div>
+    </div>
+  </main>
+
+  <footer id="footer"></footer>
+
+  <script src="/js/firebase-config.js"></script>
+  <script src="/js/data.js"></script>
+  <script src="/js/auth.js"></script>
+  <script src="/js/app.js"></script>
+  <script src="/js/login.js"></script>
+</body>
+</html>

@@ -9,6 +9,7 @@
   
   <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-storage-compat.js"></script>
   
   <link rel="stylesheet" href="/css/style.css">
@@ -20,8 +21,8 @@
 
   <header class="page-header fade-in">
     <div class="container" style="max-width: 600px;">
-      <h1>Track Your Order</h1>
-      <p>Enter your phone number or Order ID to see the status.</p>
+      <h1>Track Your Orders</h1>
+      <p>See the live status of your orders. Enter an Order ID to find a specific one.</p>
     </div>
   </header>
 
@@ -29,10 +30,10 @@
     <div class="container" style="max-width: 600px;">
       
       <div class="trk-search fade-in">
-        <label for="trackInput">Phone Number or Order ID</label>
+        <label for="trackInput">Find by Order ID</label>
         <div class="trk-search-box">
           <svg class="trk-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
-          <input type="text" id="trackInput" placeholder="e.g. 9876543210 or DR-5X9Q" onkeyup="if(event.key==='Enter') searchOrder()">
+          <input type="text" id="trackInput" placeholder="e.g. 12" onkeyup="if(event.key==='Enter') searchOrder()">
           <button class="btn btn-primary" onclick="searchOrder()">Search</button>
         </div>
       </div>
@@ -53,6 +54,7 @@
 
   <script src="/js/firebase-config.js"></script>
   <script src="/js/data.js"></script>
+  <script src="/js/auth.js"></script>
   <script src="/js/app.js"></script>
   <script src="/js/track.js"></script>
 </body>
