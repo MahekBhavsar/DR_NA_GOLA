@@ -11,6 +11,14 @@
       "destination": "/admin.html"
     },
     {
+      "source": "/login",
+      "destination": "/login.html"
+    },
+    {
+      "source": "/profile",
+      "destination": "/profile.html"
+    },
+    {
       "source": "/menu",
       "destination": "/menu.html"
     },

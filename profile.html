@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="gu">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Profile | Doctor Na Gola</title>
+  <link rel="icon" type="image/png" href="/assets/logo.png">
+  <link rel="apple-touch-icon" href="/assets/logo.png">
+
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-auth-compat.js"></script>
+
+  <!-- CSS -->
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+  <nav id="navbar"></nav>
+
+  <header class="page-header fade-in">
+    <div class="container">
+      <h1 data-pt="title">My Profile</h1>
+      <p data-pt="subtitle">Update your details and keep your account secure.</p>
+    </div>
+  </header>
+
+  <main class="section" style="padding-top: 0;">
+    <div class="container">
+      <div class="profile-grid" id="profileGrid" style="display:none;">
+
+        <!-- Personal details -->
+        <form class="profile-card fade-in" id="detailsForm" onsubmit="saveDetails(event)" novalidate>
+          <div class="profile-head">
+            <div class="profile-avatar" id="profileAvatar">?</div>
+            <div>
+              <h2 data-pt="details_title">Personal details</h2>
+              <p class="profile-sub" data-pt="details_sub">These are used for your orders.</p>
+            </div>
+          </div>
+
+          <div class="auth-message" id="detailsMsg" role="alert" style="display:none;"></div>
+
+          <div class="form-group">
+            <label data-pt="name">Full name</label>
+            <input type="text" id="pfName" class="form-input" autocomplete="name">
+          </div>
+          <div class="form-group">
+            <label data-pt="email">Email</label>
+            <input type="email" id="pfEmail" class="form-input" readonly>
+            <small class="profile-note" data-pt="email_note">Your email is your login and can't be changed here.</small>
+          </div>
+          <div class="form-group">
+            <label data-pt="phone">Mobile number</label>
+            <div class="auth-phone">
+              <span class="auth-prefix">+91</span>
+              <input type="tel" id="pfPhone" class="form-input" maxlength="10" inputmode="numeric" autocomplete="tel">
+            </div>
+          </div>
+          <button type="submit" class="btn btn-primary btn-block auth-submit" id="detailsBtn" data-pt="save">Save changes</button>
+        </form>
+
+        <!-- Change password -->
+        <form class="profile-card fade-in" id="passwordForm" onsubmit="savePassword(event)" novalidate>
+          <div class="profile-head">
+            <div class="profile-avatar profile-avatar-lock">&#128274;</div>
+            <div>
+              <h2 data-pt="pw_title">Change password</h2>
+              <p class="profile-sub" data-pt="pw_sub">Confirm your current password first.</p>
+            </div>
+          </div>
+
+          <div class="auth-message" id="passwordMsg" role="alert" style="display:none;"></div>
+
+          <div class="form-group">
+            <label data-pt="pw_current">Current password</label>
+            <div class="auth-pass">
+              <input type="password" id="pfCurrent" class="form-input" autocomplete="current-password">
+              <button type="button" class="auth-eye" onclick="togglePass(this)" aria-label="Show password">👁</button>
+            </div>
+          </div>
+          <div class="form-group">
+            <label data-pt="pw_new">New password</label>
+            <div class="auth-pass">
+              <input type="password" id="pfNew" class="form-input" autocomplete="new-password" data-pt-ph="pw_new_ph">
+              <button type="button" class="auth-eye" onclick="togglePass(this)" aria-label="Show password">👁</button>
+            </div>
+          </div>
+          <div class="form-group">
+            <label data-pt="pw_confirm">Confirm new password</label>
+            <input type="password" id="pfConfirm" class="form-input" autocomplete="new-password" data-pt-ph="pw_confirm_ph">
+          </div>
+          <button type="submit" class="btn btn-primary btn-block auth-submit" id="passwordBtn" data-pt="pw_save">Update password</button>
+        </form>
+
+      </div>
+    </div>
+  </main>
+
+  <footer id="footer"></footer>
+
+  <script src="/js/firebase-config.js"></script>
+  <script src="/js/data.js"></script>
+  <script src="/js/auth.js"></script>
+  <script src="/js/app.js"></script>
+  <script src="/js/profile.js"></script>
+</body>
+</html>

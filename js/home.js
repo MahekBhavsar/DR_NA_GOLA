@@ -68,7 +68,7 @@ function renderSpecials() {
     const extraClass = isTop1 ? 'top-selling-badge' : '';
 
     // Check if item is already in cart
-    const cartItem = typeof cart !== 'undefined' ? cart.find(c => c.id === sp.id) : null;
+    const cartItem = getCart().find(c => c.id === sp.id);
     const qtyInCart = cartItem ? cartItem.qty : 0;
 
     // Use real image if available, else fall back to emoji
@@ -105,14 +105,14 @@ function renderSpecials() {
 }
 
 function quickAddSpecial(id, buyNow) {
-  const existingItemIndex = typeof cart !== 'undefined' ? cart.findIndex(c => c.id === id) : -1;
+  const cart = getCart();
+  const existingItemIndex = cart.findIndex(c => c.id === id);
 
   if (existingItemIndex > -1) {
+    // Same special already in the cart -> just raise its quantity (totalPrice stays the unit price)
     cart[existingItemIndex].qty += 1;
-    cart[existingItemIndex].totalPrice = cart[existingItemIndex].qty * cart[existingItemIndex].unitPrice;
-    if (typeof saveCart === 'function') saveCart();
-    if (typeof updateCartBadge === 'function') updateCartBadge();
-    if (typeof showToast === 'function') showToast(t('cart_added') || 'Item added');
+    saveCart(cart);
+    showToast(currentLang === 'gu' ? '✅ કાર્ટમાં ઉમેર્યું!' : '✅ Added to cart!');
   } else {
     const dbSpecial = window.allProducts && window.allProducts.find(s => s.id === id);
     const sp = dbSpecial || SPECIALS.find(s => s.id === id);
@@ -141,17 +141,15 @@ function quickAddSpecial(id, buyNow) {
 }
 
 function updateSpecialQty(id, delta) {
-  const existingItemIndex = typeof cart !== 'undefined' ? cart.findIndex(c => c.id === id) : -1;
+  const cart = getCart();
+  const existingItemIndex = cart.findIndex(c => c.id === id);
   if (existingItemIndex > -1) {
     cart[existingItemIndex].qty += delta;
     if (cart[existingItemIndex].qty <= 0) {
       cart.splice(existingItemIndex, 1);
-      if (typeof showToast === 'function') showToast('Item removed from cart');
-    } else {
-      cart[existingItemIndex].totalPrice = cart[existingItemIndex].qty * cart[existingItemIndex].unitPrice;
+      showToast(currentLang === 'gu' ? 'કાર્ટમાંથી કાઢ્યું' : 'Item removed from cart');
     }
-    if (typeof saveCart === 'function') saveCart();
-    if (typeof updateCartBadge === 'function') updateCartBadge();
+    saveCart(cart);
     renderSpecials();
   }
 }

@@ -251,3 +251,38 @@ function _downloadBlob(blob, filename) {
   document.body.removeChild(link);
   setTimeout(() => URL.revokeObjectURL(url), 2000);
 }
+
+// ── Customers export (the Excel file also opens directly in Google Sheets) ──
+
+function exportCustomers(format) {
+  const rows = (typeof getCustomerRows === 'function') ? getCustomerRows() : [];
+  if (!rows.length) { admToast('No customers to export', '#DC2626'); return; }
+  admToast(`Generating ${format.toUpperCase()}…`);
+
+  const fmt = ts => ts ? new Date(ts).toLocaleString('en-IN') : '';
+  const data = rows.map((r, i) => ({
+    '#'               : i + 1,
+    'Name'            : r.c.name || '',
+    'Email'           : r.c.email || '',
+    'Phone'           : r.c.phone || '',
+    'Joined'          : fmt(r.c.createdAt),
+    'Last Login'      : fmt(r.c.lastLoginAt),
+    'Last Active'     : fmt(r.c.lastActiveAt),
+    'Orders'          : r.orders,
+    'Total Spent (Rs)': r.spent
+  }));
+
+  if (format === 'csv') {
+    const headers = Object.keys(data[0]).join(',');
+    const lines = data.map(row => Object.values(row).map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n');
+    // BOM so Excel shows Gujarati / Unicode names correctly
+    _downloadBlob(new Blob(['﻿' + headers + '\n' + lines], { type: 'text/csv;charset=utf-8;' }), `Customers_${_today()}.csv`);
+  } else {
+    if (typeof XLSX === 'undefined') { admToast('Excel library not loaded', '#DC2626'); return; }
+    const ws = XLSX.utils.json_to_sheet(data);
+    ws['!cols'] = [{ wch: 4 }, { wch: 22 }, { wch: 30 }, { wch: 13 }, { wch: 20 }, { wch: 20 }, { wch: 20 }, { wch: 8 }, { wch: 16 }];
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Customers');
+    XLSX.writeFile(wb, `Customers_${_today()}.xlsx`);
+  }
+}

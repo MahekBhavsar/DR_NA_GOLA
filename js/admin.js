@@ -4,6 +4,7 @@
 
 let allOrders = [];
 let allReviews = [];
+let allCustomers = [];
 let allNotifications = [];
 let revChartInstance = null;
 let flavChartInstance = null;
@@ -34,61 +35,64 @@ function hidePanel() {
   document.getElementById('adminPanel').classList.remove('visible');
 }
 
-function handleLogin(e) {
+// Admin = a Firebase Auth user whose uid is listed at  admins/{uid} = true  in the database.
+// (Set up once in the Firebase console; see FIREBASE_SETUP.md.) The database rules enforce
+// this on the server, so nothing secret lives in this file.
+let adminInited = false;
+const adminAuth = firebase.auth();
+
+async function isAdminUser() {
+  const user = adminAuth.currentUser;
+  if (!user) return false;
+  try {
+    const snap = await db.ref('admins/' + user.uid).once('value');
+    return snap.val() === true;
+  } catch (e) {
+    return false;
+  }
+}
+
+async function enterAdmin() {
+  showPanel();
+  if (!adminInited) { adminInited = true; initAdmin(); }
+}
+
+async function handleLogin(e) {
   e.preventDefault();
 
+  const emailEl = document.getElementById('adminEmail');
   const pwdEl = document.getElementById('adminPassword');
   const errEl = document.getElementById('loginError');
-  const pwd = pwdEl ? pwdEl.value : '';
-
+  const btn = document.getElementById('adminLoginBtn');
   if (errEl) errEl.style.display = 'none';
+  if (btn) btn.disabled = true;
 
-  if (pwd === 'doctor2024') {
-    sessionStorage.setItem('adminAuth', 'true');
-
-    const saveBox = document.getElementById('savePassword');
-    if (saveBox && saveBox.checked) {
-      localStorage.setItem('adminSavedPwd', pwd);
+  try {
+    await adminAuth.signInWithEmailAndPassword(emailEl.value.trim(), pwdEl.value);
+    if (await isAdminUser()) {
+      await enterAdmin();
     } else {
-      localStorage.removeItem('adminSavedPwd');
+      await adminAuth.signOut();
+      if (errEl) { errEl.textContent = '❌ This account is not an admin.'; errEl.style.display = 'block'; }
     }
-
-    showPanel();
-    initAdmin();
-  } else {
-    if (errEl) errEl.style.display = 'block';
+  } catch (err) {
+    if (errEl) { errEl.textContent = '❌ Wrong email or password! Try again.'; errEl.style.display = 'block'; }
     if (pwdEl) { pwdEl.value = ''; pwdEl.focus(); }
   }
+  if (btn) btn.disabled = false;
 }
 
 function checkLogin() {
-  // Pre-fill saved password
-  const saved = localStorage.getItem('adminSavedPwd');
-  if (saved) {
-    const pwdEl = document.getElementById('adminPassword');
-    const saveBox = document.getElementById('savePassword');
-    if (pwdEl) pwdEl.value = saved;
-    if (saveBox) saveBox.checked = true;
-  }
-
-  // Auto-login if session still active
-  if (sessionStorage.getItem('adminAuth') === 'true') {
-    showPanel();
-    initAdmin();
-  }
-}
-
-function toggleSavePassword() {
-  const saveBox = document.getElementById('savePassword');
-  if (saveBox && !saveBox.checked) {
-    localStorage.removeItem('adminSavedPwd');
-  }
+  // Auto-login if a valid admin session is still saved by Firebase
+  adminAuth.onAuthStateChanged(async user => {
+    if (user && await isAdminUser()) enterAdmin();
+    else hidePanel();
+  });
 }
 
 function logout() {
-  sessionStorage.removeItem('adminAuth');
+  adminAuth.signOut();
   hidePanel();
-  // Reset password field
   const pwdEl = document.getElementById('adminPassword');
   if (pwdEl) pwdEl.value = '';
 }
@@ -117,6 +121,7 @@ function initAdmin() {
     }
     allOrders = orders;
     renderOrders();
+    renderCustomers();
     updateDashboardStats();
     updateCharts();
     initialLoadComplete = true;
@@ -137,6 +142,13 @@ function initAdmin() {
     });
   } else {
     renderAllProductTables();
+  }
+
+  if (typeof DB.listenUsers === 'function') {
+    DB.listenUsers(function (users) {
+      allCustomers = users || [];
+      renderCustomers();
+    });
   }
 
   if (typeof DB.listenContacts === 'function') {
@@ -258,8 +270,8 @@ function renderOrders() {
           <div style="font-size:0.78rem;color:#888;margin-top:2px;">${time}</div>
         </td>
         <td data-label="Customer">
-          <div style="font-weight:700;font-size:1.05rem;color:#1a1a1a;">${order.customerName}</div>
-          <div style="font-size:0.85rem;color:#555;">📞 ${order.phone}</div>
+          <div style="font-weight:700;font-size:1.05rem;color:#1a1a1a;">${safeText(order.customerName)}</div>
+          <div style="font-size:0.85rem;color:#555;">📞 ${safeText(order.phone)}</div>
         </td>
         <td data-label="Type">
           <div style="font-size:0.9rem;font-weight:600;">${typeIcon}</div>
@@ -389,29 +401,48 @@ function notifyAdmin(orderId, automatic) {
 // DASHBOARD STATS
 // ═══════════════════════════════════════════
 
-function notifyWebsitePaymentDone(orderId) {
-  const order = allOrders.find(o => o.id === orderId);
-  if (!order) return;
-
-  if (typeof DB === 'undefined' || typeof DB.pushNotification !== 'function') {
-    admToast('Website notification could not be sent.', '#DC2626');
+// Order messages are PRIVATE: written to userNotifications/{customer uid}, never to the public feed.
+function sendCustomerNotification(order, type, title, message, okText) {
+  if (typeof DB === 'undefined' || typeof DB.pushUserNotification !== 'function') {
+    admToast('Notification could not be sent.', '#DC2626');
     return;
   }
-
-  const name = order.customerName || 'there';
-  const feedbackUrl = window.location.origin + '/index.html#feedback';
-  DB.pushNotification({
-    type: 'payment-done',
-    title: 'Thank you for visiting Doctor Na Gola!',
-    message: 'Hi ' + name + ', payment for your order ' + (order.orderId || '') + ' is confirmed. We hope you enjoyed your gola! Please share your feedback: ' + feedbackUrl,
+  if (!order.uid) {
+    admToast('This order has no customer account, so no website notification was sent.', '#D97706');
+    return;
+  }
+  DB.pushUserNotification(order.uid, {
+    type: type,
+    title: title,
+    message: message,
     orderId: order.orderId || '',
-    phone: order.phone || '',
     timestamp: Date.now()
   }).then(function () {
-    admToast('Payment notification sent to customer.');
+    admToast(okText);
   }).catch(function () {
     admToast('Website notification could not be sent.', '#DC2626');
   });
+}
+
+function notifyWebsiteOrderDone(orderId) {
+  const order = allOrders.find(o => o.id === orderId);
+  if (!order) return;
+  const name = (order.customerName || 'there').split(' ')[0];
+  sendCustomerNotification(order, 'order-done',
+    'Your order is ready!',
+    'Hi ' + name + ', your order ' + (order.orderId || '') + ' is ready. Please collect it from the shop.',
+    'Order-ready notification sent to the customer.');
+}
+
+function notifyWebsitePaymentDone(orderId) {
+  const order = allOrders.find(o => o.id === orderId);
+  if (!order) return;
+  const name = (order.customerName || 'there').split(' ')[0];
+  const feedbackUrl = window.location.origin + '/index.html#feedback';
+  sendCustomerNotification(order, 'payment-done',
+    'Thank you for visiting Doctor Na Gola!',
+    'Hi ' + name + ', payment for your order ' + (order.orderId || '') + ' is confirmed. We hope you enjoyed your gola! Share your feedback: ' + feedbackUrl,
+    'Payment notification sent to the customer.');
 }
 
 function updateDashboardStats() {
@@ -961,9 +992,77 @@ function renderContacts(contacts) {
       '<td style="white-space:nowrap;color:var(--adm-muted);font-size:0.8rem;">' +
       new Date(c.timestamp).toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) +
       '</td>' +
-      '<td style="font-weight:600;">' + c.name + '</td>' +
-      '<td style="color:var(--adm-muted);">' + c.phone + '</td>' +
-      '<td>' + c.message + '</td>' +
+      '<td style="font-weight:600;">' + safeText(c.name) + '</td>' +
+      '<td style="color:var(--adm-muted);">' + safeText(c.phone) + '</td>' +
+      '<td>' + safeText(c.message) + '</td>' +
+      '</tr>';
+  }).join('');
+}
+
+// ═══════════════════════════════════════════
+// CUSTOMERS
+// ═══════════════════════════════════════════
+
+function fmtCustomerDate(ts) {
+  if (!ts) return '—';
+  return new Date(ts).toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+}
+
+// Orders + spend per customer (matched by account id, or by phone for older orders)
+function customerOrderStats(c) {
+  const mine = (allOrders || []).filter(function (o) {
+    return (o.uid && o.uid === c.uid) || (!o.uid && c.phone && o.phone === c.phone);
+  });
+  return { count: mine.length, spent: mine.reduce(function (sum, o) { return sum + (Number(o.total) || 0); }, 0) };
+}
+
+function getCustomerRows() {
+  return (allCustomers || []).map(function (c) {
+    const st = customerOrderStats(c);
+    return { c: c, orders: st.count, spent: st.spent };
+  }).sort(function (a, b) { return (b.c.createdAt || 0) - (a.c.createdAt || 0); });
+}
+
+function renderCustomers() {
+  const tbody = document.getElementById('customersTableBody');
+  if (!tbody) return;
+
+  const q = ((document.getElementById('customerSearch') || {}).value || '').trim().toLowerCase();
+  const all = getCustomerRows();
+  const rows = !q ? all : all.filter(function (r) {
+    return (String(r.c.name || '') + ' ' + String(r.c.email || '') + ' ' + String(r.c.phone || '')).toLowerCase().indexOf(q) !== -1;
+  });
+
+  // Summary chips
+  const week = Date.now() - 7 * 24 * 60 * 60 * 1000;
+  const newWeek = all.filter(function (r) { return (r.c.createdAt || 0) >= week; }).length;
+  const activeWeek = all.filter(function (r) { return (r.c.lastActiveAt || r.c.lastLoginAt || 0) >= week; }).length;
+  const chip = function (label, value, color) {
+    return '<div style="background:#fff;border:1px solid #e3ecf7;border-left:4px solid ' + color + ';border-radius:12px;padding:.6rem 1rem;min-width:130px;">' +
+      '<div style="font-size:.75rem;color:var(--adm-muted);font-weight:600;">' + label + '</div>' +
+      '<div style="font-size:1.35rem;font-weight:800;color:#10233c;">' + value + '</div></div>';
+  };
+  const stats = document.getElementById('customerStats');
+  if (stats) {
+    stats.innerHTML = chip('Total customers', all.length, '#1e88e5') + chip('New this week', newWeek, '#43a047') + chip('Active this week', activeWeek, '#fb8c00');
+  }
+
+  if (!rows.length) {
+    tbody.innerHTML = '<tr><td colspan="9"><div class="empty-state"><div class="big">👥</div>' + (all.length ? 'No customers match your search' : 'No customers yet') + '</div></td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = rows.map(function (r, i) {
+    const c = r.c;
+    const dateCell = function (ts) { return '<td style="white-space:nowrap;color:var(--adm-muted);font-size:.8rem;">' + fmtCustomerDate(ts) + '</td>'; };
+    return '<tr>' +
+      '<td style="color:var(--adm-muted);">' + (i + 1) + '</td>' +
+      '<td style="font-weight:700;">' + safeText(c.name) + '</td>' +
+      '<td>' + safeText(c.email) + '</td>' +
+      '<td>' + safeText(c.phone) + '</td>' +
+      dateCell(c.createdAt) + dateCell(c.lastLoginAt) + dateCell(c.lastActiveAt) +
+      '<td style="font-weight:700;">' + r.orders + '</td>' +
+      '<td style="font-weight:700;color:#16A34A;">₹' + r.spent + '</td>' +
       '</tr>';
   }).join('');
 }

@@ -1,76 +1,100 @@
 // ============================================
-// Order Tracking Logic
+// Order Tracking Logic — customers only see THEIR OWN orders
 // ============================================
 
-document.addEventListener('DOMContentLoaded', () => {
+let myOrders = [];
+
+document.addEventListener('DOMContentLoaded', async () => {
   renderNavbar('track');
   renderFooter();
 
-  // If URL has orderId, search automatically
-  const urlParams = new URLSearchParams(window.location.search);
-  const oid = urlParams.get('id');
-  if (oid) {
-    document.getElementById('trackInput').value = oid;
-    searchOrder();
+  const resultDiv = document.getElementById('trackResult');
+  const loader = document.getElementById('trackLoader');
+  loader.style.display = 'block';
+
+  const user = await CustomerAuth.ready();
+  const profile = CustomerAuth.getProfile();
+  loader.style.display = 'none';
+
+  if (!user || !profile) {
+    showLoginRequired();
+    return;
   }
+
+  loader.style.display = 'block';
+  try {
+    await loadMyOrders(user);
+  } catch (err) {
+    console.error(err);
+    loader.style.display = 'none';
+    resultDiv.innerHTML = `<p style="color: red; text-align:center;">Error fetching orders. Please try again.</p>`;
+    resultDiv.style.display = 'block';
+    return;
+  }
+  loader.style.display = 'none';
+
+  // Deep link from the order-success page: track.html?id=#12
+  const oid = new URLSearchParams(window.location.search).get('id');
+  if (oid) document.getElementById('trackInput').value = oid;
+  searchOrder();
+});
+
+// Logging out on this page -> back to the login prompt
+window.addEventListener('customer-auth-changed', () => {
+  if (!CustomerAuth.getUser()) showLoginRequired();
 });
 
 function onLangChange() {
   // refresh if needed
 }
 
-function searchOrder() {
-  const query = document.getElementById('trackInput').value.trim();
-  if (!query) return;
-
+function showLoginRequired() {
+  const gu = typeof currentLang !== 'undefined' && currentLang === 'gu';
+  const search = document.querySelector('.trk-search');
+  if (search) search.style.display = 'none';
   const resultDiv = document.getElementById('trackResult');
-  const loader = document.getElementById('trackLoader');
+  resultDiv.innerHTML = `
+    <div class="trk-login-card">
+      <div class="trk-login-icon">&#128274;</div>
+      <h3>${gu ? 'તમારા ઓર્ડર જોવા લૉગિન કરો' : 'Log in to see your orders'}</h3>
+      <p>${gu ? 'સુરક્ષા માટે, તમે ફક્ત તમારા પોતાના ઓર્ડર જ ટ્રેક કરી શકો છો.' : 'For your privacy, you can only track your own orders.'}</p>
+      <a href="login.html?next=track.html" class="btn btn-primary">${gu ? 'લૉગિન / સાઇન અપ' : 'Log in / Sign up'}</a>
+    </div>`;
+  resultDiv.style.display = 'block';
+}
 
-  resultDiv.style.display = 'none';
-  loader.style.display = 'block';
+// Only downloads orders that belong to this customer's account
+async function loadMyOrders(user) {
+  const snap = await db.ref('orders').orderByChild('uid').equalTo(user.uid).once('value');
+  const orders = [];
+  snap.forEach(child => { orders.push(child.val()); });
+  myOrders = orders.sort((a, b) => b.timestamp - a.timestamp);
+}
 
-  // Read orders from Firebase
-  const ref = firebase.database().ref('orders');
-  ref.once('value')
-    .then(snapshot => {
-      loader.style.display = 'none';
-      const orders = [];
-      snapshot.forEach(child => {
-        orders.push(child.val());
-      });
+function searchOrder() {
+  const resultDiv = document.getElementById('trackResult');
+  const query = document.getElementById('trackInput').value.trim();
 
-      // Normalise query: strip leading # so "1" and "#1" both match order "#1"
-      const normalQuery = query.replace(/^#+/, '').toLowerCase();
+  let matched = myOrders;
+  if (query) {
+    // "1" and "#1" both match order "#1"
+    const normalQuery = query.replace(/^#+/, '').toLowerCase();
+    matched = myOrders.filter(o => String(o.orderId).replace(/^#+/, '').toLowerCase() === normalQuery);
+  }
 
-      // Filter by phone or orderId (with or without # prefix)
-      const matched = orders.filter(o => {
-        const normId = String(o.orderId).replace(/^#+/, '').toLowerCase();
-        return normId === normalQuery || o.phone === query;
-      });
-
-      if (matched.length === 0) {
-        resultDiv.innerHTML = `
-          <div style="text-align: center; padding: 2rem; background: var(--white); border-radius: var(--radius-md); border: 2px dashed #ccc;">
-            <div style="font-size: 3rem; margin-bottom: 1rem;">🔍</div>
-            <h3 style="margin-bottom: 0.5rem;">No Orders Found</h3>
-            <p style="color: var(--text-light);">We couldn't find any orders matching "${query}".</p>
-          </div>
-        `;
-      } else {
-        // Sort newest first
-        matched.sort((a, b) => b.timestamp - a.timestamp);
-
-        resultDiv.innerHTML = matched.map(o => renderOrderCard(o)).join('');
-      }
-
-      resultDiv.style.display = 'block';
-    })
-    .catch(err => {
-      console.error(err);
-      loader.style.display = 'none';
-      resultDiv.innerHTML = `<p style="color: red;">Error fetching orders. Please try again.</p>`;
-      resultDiv.style.display = 'block';
-    });
+  if (matched.length === 0) {
+    resultDiv.innerHTML = query
+      ? `<div class="trk-empty"><div class="trk-empty-icon">&#128269;</div>
+           <h3>No Orders Found</h3>
+           <p>None of your orders match "${query.replace(/[<>&"]/g, '')}".</p></div>`
+      : `<div class="trk-empty"><div class="trk-empty-icon">&#127847;</div>
+           <h3>No orders yet</h3>
+           <p>When you place an order it will show up here.</p>
+           <a href="menu.html" class="btn btn-primary">Browse Menu</a></div>`;
+  } else {
+    resultDiv.innerHTML = matched.map(o => renderOrderCard(o)).join('');
+  }
+  resultDiv.style.display = 'block';
 }
 
 function renderOrderCard(order) {

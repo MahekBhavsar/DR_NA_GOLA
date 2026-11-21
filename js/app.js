@@ -80,7 +80,8 @@ function initNotifications() {
   if (typeof DB !== 'undefined' && DB.listenNotifications) {
     DB.listenNotifications((notif) => {
       if (notif && notif.timestamp > lastSeenNotif) {
-        if (notif.type === 'order-completed' && !isNotificationForThisCustomer(notif)) {
+        // Public feed = admin broadcasts only. Anything order-specific is private (userNotifications).
+        if (notif.type && notif.type !== 'global') {
           lastSeenNotif = notif.timestamp;
           localStorage.setItem('dr-gola-last-notif', lastSeenNotif);
           return;
@@ -100,6 +101,36 @@ function initNotifications() {
   }
 }
 
+// ── Private order notifications (visible only to the customer they belong to) ──
+let _privNotifUid = null;
+let _privNotifRef = null;
+
+function attachPrivateNotifications() {
+  if (typeof CustomerAuth === 'undefined' || typeof DB === 'undefined' || !DB.listenUserNotifications) return;
+  CustomerAuth.ready().then(user => {
+    const uid = user ? user.uid : null;
+    if (uid === _privNotifUid) return;
+    if (_privNotifRef) { try { _privNotifRef.off(); } catch (e) { /* ignore */ } _privNotifRef = null; }
+    _privNotifUid = uid;
+    if (!uid) return;
+
+    const key = 'dr-gola-last-pnotif-' + uid;
+    // First time on this device: start from "now" so old messages don't pop up
+    let last = Number(localStorage.getItem(key));
+    if (!last) { last = Date.now(); localStorage.setItem(key, String(last)); }
+
+    const esc = v => String(v == null ? '' : v).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[c]));
+    _privNotifRef = DB.listenUserNotifications(uid, notif => {
+      if (notif && notif.timestamp > last) {
+        last = notif.timestamp;
+        localStorage.setItem(key, String(last));
+        showToast(`<strong>🔔 ${esc(notif.title)}</strong><br>${esc(notif.message)}`, 'broadcast-toast', 9000);
+      }
+    });
+  });
+}
+window.addEventListener('customer-auth-changed', attachPrivateNotifications);
+
 // ── Navbar ──
 function isNotificationForThisCustomer(notif) {
   try {
@@ -115,9 +146,20 @@ function isNotificationForThisCustomer(notif) {
   }
 }
 
+// ── Closed mode: when the admin switches it on, every customer page redirects to the closed page ──
+let _closedChecked = false;
+function checkClosedMode() {
+  if (_closedChecked || typeof db === 'undefined') return;
+  _closedChecked = true;
+  db.ref('siteSettings/closedMode').once('value')
+    .then(snap => { if (snap.val() === true) window.location.replace('closed.html'); })
+    .catch(() => {});
+}
+
 function renderNavbar(activePage) {
   const nav = document.getElementById('navbar');
   if (!nav) return;
+  checkClosedMode();
 
   const pages = [
     { key: 'nav_home', href: 'index.html', id: 'home' },
@@ -142,6 +184,7 @@ function renderNavbar(activePage) {
         <button class="nav-lang-btn" id="langToggleBtn" onclick="toggleLang(); renderNavbar('${activePage}'); if(typeof onLangChange==='function') onLangChange();">
           ${currentLang === 'en' ? '🇮🇳 ગુજરાતી' : '🇬🇧 English'}
         </button>
+        <div class="nav-auth" id="navAuth"></div>
         <a href="cart.html" class="nav-cart-btn">
           <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
           <span class="cart-text" data-t="nav_cart">${t('nav_cart')}</span>
@@ -156,13 +199,72 @@ function renderNavbar(activePage) {
   `;
 
   updateCartBadge();
+  updateNavAuth();
   initNotifications();
+  attachPrivateNotifications();
 
   // Scroll effect
   window.addEventListener('scroll', () => {
     nav.classList.toggle('scrolled', window.scrollY > 50);
   });
 }
+
+// ── Customer login state in navbar ──
+function currentPageForLogin() {
+  let page = window.location.pathname.split('/').pop() || 'index.html';
+  if (!page.includes('.')) page += '.html';
+  return page + window.location.search;
+}
+
+function updateNavAuth() {
+  const box = document.getElementById('navAuth');
+  if (!box) return;
+  const gu = currentLang === 'gu';
+  let cached = null;
+  try { cached = JSON.parse(localStorage.getItem('dr-gola-user') || 'null'); } catch (e) { /* ignore */ }
+
+  if (cached && cached.name) {
+    const first = String(cached.name).split(' ')[0].replace(/[<>&"]/g, '');
+    box.innerHTML = `
+      <div class="nav-user">
+        <button class="nav-user-btn" type="button" onclick="toggleUserMenu(event)">
+          <span class="nav-user-avatar">${first.charAt(0).toUpperCase()}</span>
+          <span class="nav-user-name">${first}</span>
+          <span class="nav-user-caret">&#9662;</span>
+        </button>
+        <div class="nav-user-menu" id="navUserMenu">
+          <div class="nav-user-phone">${String(cached.email || '').replace(/[<>&"]/g, '')}</div>
+          <a href="profile.html">${gu ? 'મારી પ્રોફાઇલ' : 'My Profile'}</a>
+          <a href="track.html">${gu ? 'મારા ઓર્ડર' : 'My Orders'}</a>
+          <button type="button" onclick="logoutCustomer()">${gu ? 'લૉગ આઉટ' : 'Log out'}</button>
+        </div>
+      </div>`;
+  } else {
+    const onLogin = window.location.pathname.includes('login');
+    const href = onLogin ? 'login.html' : 'login.html?next=' + encodeURIComponent(currentPageForLogin());
+    box.innerHTML = `<a href="${href}" class="nav-login-btn">
+      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      <span class="nav-login-text">${gu ? 'લૉગિન' : 'Login'}</span></a>`;
+  }
+}
+
+function toggleUserMenu(e) {
+  e.stopPropagation();
+  const menu = document.getElementById('navUserMenu');
+  if (menu) menu.classList.toggle('open');
+}
+
+async function logoutCustomer() {
+  try { await CustomerAuth.logout(); } catch (e) { /* ignore */ }
+  localStorage.removeItem('dr-gola-user');
+  window.location.href = 'index.html';
+}
+
+window.addEventListener('customer-auth-changed', updateNavAuth);
+document.addEventListener('click', () => {
+  const menu = document.getElementById('navUserMenu');
+  if (menu) menu.classList.remove('open');
+});
 
 function toggleMobileNav() {
   const links = document.getElementById('navLinks');

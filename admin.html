@@ -11,6 +11,7 @@
   <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-storage-compat.js"></script>
 
   <!-- Chart.js -->
@@ -440,18 +441,13 @@
       <p>Doctor Na Gola</p>
 
       <form onsubmit="handleLogin(event)">
-        <input type="password" id="adminPassword" class="form-input"
+        <input type="email" id="adminEmail" class="form-input" autocomplete="username"
+          style="text-align:center;margin-bottom:.75rem;" placeholder="Admin email" required>
+        <input type="password" id="adminPassword" class="form-input" autocomplete="current-password"
           style="text-align:center;margin-bottom:1rem;" placeholder="Enter Password" required>
 
-        <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:1rem;justify-content:center;">
-          <input type="checkbox" id="savePassword" onchange="toggleSavePassword()">
-          <label for="savePassword" style="font-size:.85rem;color:var(--primary-800);cursor:pointer;">
-            Remember Password
-          </label>
-        </div>
-
-        <button type="submit" class="btn btn-primary btn-block">Login</button>
-        <div id="loginError">❌ Wrong password! Try again.</div>
+        <button type="submit" class="btn btn-primary btn-block" id="adminLoginBtn">Login</button>
+        <div id="loginError">❌ Wrong email or password! Try again.</div>
       </form>
 
       <a href="index.html" class="btn btn-outline"
@@ -513,6 +509,9 @@
           style="background:var(--danger);color:white;border-radius:10px;padding:2px 6px;font-size:.7rem;margin-left:auto;display:none;">
           New
         </span>
+      </div>
+      <div class="admin-sidebar-link" data-tab="customers" onclick="switchTab('customers')">
+        <span class="sidebar-emoji">&#128101;</span> <span>Customers</span>
       </div>
       <div class="admin-sidebar-link" data-tab="products" onclick="switchTab('products')">
         <span class="sidebar-emoji">🍧</span> <span>Products CMS</span>
@@ -743,6 +742,44 @@
           </div>
         </div>
         <div id="ordersCardsGrid" style="display:flex;flex-direction:column;gap:1rem;width:100%;"></div>
+      </div>
+
+      <!-- Customers Tab -->
+      <div id="tab-customers" class="admin-tab">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:.75rem;">
+          <div>
+            <h2 style="color:var(--text-dark);margin:0;">Customers</h2>
+            <p style="color:var(--adm-muted);margin:.25rem 0 0;font-size:.9rem;">Everyone who has created an account, with their join and login dates.</p>
+          </div>
+          <div style="display:flex;gap:.5rem;flex-wrap:wrap;">
+            <button class="btn btn-outline btn-sm" onclick="exportCustomers('csv')"   style="font-weight:600;">&#128229; CSV</button>
+            <button class="btn btn-outline btn-sm" onclick="exportCustomers('excel')" style="font-weight:600;color:#16A34A;border-color:#16A34A;">&#128202; Excel</button>
+          </div>
+        </div>
+
+        <div id="customerStats" style="display:flex;gap:.75rem;flex-wrap:wrap;margin-bottom:1rem;"></div>
+
+        <input type="search" id="customerSearch" class="form-input" placeholder="Search by name, email or phone..."
+          oninput="renderCustomers()" style="max-width:380px;margin-bottom:1rem;">
+
+        <div class="orders-table-wrapper">
+          <table class="orders-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Phone</th>
+                <th>Joined</th>
+                <th>Last login</th>
+                <th>Last active</th>
+                <th>Orders</th>
+                <th>Spent</th>
+              </tr>
+            </thead>
+            <tbody id="customersTableBody"></tbody>
+          </table>
+        </div>
       </div>
 
       <!-- Reviews Tab -->

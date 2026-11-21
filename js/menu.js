@@ -135,12 +135,8 @@ function openCustomizeModal(itemId, type) {
   }
   
   currentQty = 1;
-  updateModalUI();
-  
-  document.getElementById('customizeModal').classList.add('active');
-  document.body.style.overflow = 'hidden';
 
-  // Inject button in footer
+  // Build the footer BEFORE the first UI update so the Buy Now button can be disabled correctly
   const footer = document.querySelector('.modal-footer');
   if (footer) {
     footer.innerHTML = `
@@ -151,6 +147,11 @@ function openCustomizeModal(itemId, type) {
       <button class="btn btn-primary btn-block" id="modalBuyBtn" onclick="buyNowAndClose()" style="font-size:1.05rem; padding: 0.9rem;">Buy Now</button>
     `;
   }
+
+  updateModalUI();
+
+  document.getElementById('customizeModal').classList.add('active');
+  document.body.style.overflow = 'hidden';
 }
 
 function closeModal() {
@@ -349,6 +350,8 @@ function addToCartAndClose() {
 }
 
 function buyNowAndClose() {
+  // Nothing chosen yet (regular flavours need at least one size) -> stay in the modal
+  if (!currentItem || (!currentItem.isSpecial && selectedCategories.size === 0)) return;
   addToCartAndClose();
   window.location.href = 'cart.html';
 }
